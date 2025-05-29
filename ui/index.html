@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tinyurl </title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Welcome to Tinyurl </h1>
+<p class="description">
+    <span class="highlight">Tinyurl</span> is your go-to solution for shortening long and cumbersome URLs into tiny, shareable links.
+    With Tinyurl, you can easily create shortened URLs that are perfect for sharing on social media, emails, or anywhere else.
+    Effortlessly manage and copy your URLs with our user-friendly interface!
+</p>
+
+<h2>Generate Your TinyURL Below:</h2>
+<div class="alert-box alert-error" id="alertBox">Please enter a valid URL!</div>
+<textarea id="urlInput" placeholder="Enter your URL here" onfocus="hideAlert()"></textarea>
+<button onclick="generateTinyURL()">Generate TinyURL <span class="loading-icon" id="loadingIcon"></span></button>
+
+<div class="responsive">
+    <table id="responseTable">
+        <thead>
+        <tr>
+            <th>Original URL</th>
+            <th>Generated TinyURL</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function hideAlert() {
+        const urlInput = document.getElementById('urlInput');
+        const alertBox = document.getElementById('alertBox');
+        urlInput.classList.remove('error');
+        alertBox.style.display = 'none';
+    }
+
+    async function generateTinyURL() {
+        const urlInput = document.getElementById('urlInput');
+        const url = urlInput.value.trim();
+        const alertBox = document.getElementById('alertBox');
+        const loadingIcon = document.getElementById('loadingIcon');
+        const responseTable = document.getElementById('responseTable').querySelector('tbody');
+
+        // Reset alert box and textarea styles
+        urlInput.classList.remove('error');
+        alertBox.style.display = 'none';
+
+        if (!url) {
+            // Highlight textarea and show styled alert
+            urlInput.classList.add('error');
+            alertBox.style.display = 'block';
+            alertBox.classList.remove('alert-success');
+            alertBox.classList.remove('alert-info');
+            alertBox.classList.add('alert-error');
+            alertBox.textContent = 'Please enter a valid URL!';
+            return;
+        }
+
+        // Show loading icon
+        loadingIcon.style.display = 'inline-block';
+
+        try {
+            const response = await fetch('REPLACE_ME/urls', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: url
+            });
+
+            if (!response.ok) {
+                alertBox.style.display = 'block';
+                alertBox.classList.remove('alert-success');
+                alertBox.classList.remove('alert-info');
+                alertBox.classList.add('alert-error');
+                const data =  await response.json();
+                alertBox.textContent = `${data.error}`;
+            } else {
+                const data = await response.json();
+                const currentUrl = window.location.href;
+                const tinyURL = data.tinyurl;
+
+                // Append current URL to tinyURL
+                const fullTinyURL = `${currentUrl}/${tinyURL}`;
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td>${url}</td>
+                    <td><a href="${tinyURL}" target="_blank">${fullTinyURL}</a></td>
+                    <td>
+                        <button class="share-button" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy Generated URL</button>
+                    </td>
+                `;
+                responseTable.appendChild(newRow);
+                alertBox.style.display = 'block';
+                alertBox.classList.remove('alert-error');
+                alertBox.classList.remove('alert-info');
+                alertBox.classList.add('alert-success');
+                alertBox.textContent = 'URL shortened successfully!';
+            }
+        } catch (error) {
+            alertBox.style.display = 'block';
+            alertBox.classList.remove('alert-success');
+            alertBox.classList.remove('alert-info');
+            alertBox.classList.add('alert-error');
+            alertBox.textContent = `Error: ${error.message}`;
+        }
+
+        // Hide loading icon
+        loadingIcon.style.display = 'none';
+    }
+
+    function copyToClipboard(button, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            button.textContent = 'Copied!';
+        }).catch(err => {
+            button.textContent = 'Failed!';
+        });
+    }
+</script>
+</body>
+</html>

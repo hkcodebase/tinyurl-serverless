@@ -1,0 +1,71 @@
+openapi: 3.0.0
+info:
+  title: URL Shortener API
+  description: API for generating and managing short URLs
+  version: 1.0.0
+servers:
+  - url: ""
+paths:
+  /urls:
+    post:
+      summary: Generate a short URL
+      description: Accepts a URL string and returns a shortened version
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url:
+                  type: string
+                  example: "https://example.com"
+      responses:
+        '200':
+          description: Successfully created short URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tinyurl:
+                    type: string
+                    example: "https://tinyurl.guru/abc123"
+
+    delete:
+      summary: Delete a short URL
+      description: Deletes a stored short URL based on its value
+      parameters:
+        - name: url
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "https://tinyurl.guru/abc123"
+      responses:
+        '200':
+          description: Successfully deleted short URL
+        '404':
+          description: URL not found
+
+  /{hash}:
+    get:
+      summary: Redirect to original URL
+      description: Redirects the user to the original long URL using the short hash
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          schema:
+            type: string
+            example: "abc123"
+      responses:
+        '302':
+          description: Redirecting to original URL
+          headers:
+            Location:
+              schema:
+                type: string
+                example: "https://example.com"
+        '404':
+          description: Short URL not found

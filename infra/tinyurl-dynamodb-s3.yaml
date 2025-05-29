@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  UrlDynamoDBTable:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      TableName: 'Url'
+      AttributeDefinitions:
+        - AttributeName: 'hash'
+          AttributeType: 'S' # String type
+      KeySchema:
+        - AttributeName: 'hash'
+          KeyType: 'HASH'
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+  # S3 Bucket to Store Lambda Code
+  TinyurlLambdaCodeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "tinyurl-lambda-code-bucket-${AWS::AccountId}-${AWS::Region}"
+      VersioningConfiguration:
+        Status: Enabled
+
+Outputs:
+  S3BucketName:
+    Description: "S3 Bucket Name to Store Tinyurl Lambda Code"
+    Value: !Ref TinyurlLambdaCodeBucket
+    Export:
+      Name: TinyurlLambdaCodeBucketName
