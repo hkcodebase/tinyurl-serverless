@@ -1,13 +1,15 @@
 # TinyURL
 
-TinyURL is a URL shortening service built using **Java** and **AWS**, designed as a **learning experiment** 
+TinyURL is a URL shortening service built using **AWS Serverless Services** with Lambda code in **Java**, designed as a **learning experiment** 
 and **side project** to explore cloud technologies and serverless architectures. 
 This project is not intended for production use but serves as a great hands-on exercise in building scalable web applications
 
 # App
-
-This project contains a maven application with [AWS Java SDK 2.x](https://github.com/aws/aws-sdk-java-v2) dependencies.
-
+- Infrastructure is created using AWS Cloudformation
+- Lambda function is a maven application with [AWS Java SDK 2.x](https://github.com/aws/aws-sdk-java-v2) dependencies.
+- UI is build using HTML/Javascript/CSS and Served using S3 and Cloudfront.
+- Database is DynamoDB
+- APIs are deployed in AWS API Gateway  
 
 ## Prerequisites
 - Java 21
@@ -23,7 +25,7 @@ cd lambda && mvn clean package && cd ..
 
 # Create Infra 
 
-1. Create DynamoDB table (to hold redirection urls) and s3 bucket (for lambda code) 
+1. Create DynamoDB table (to store data) and s3 bucket (for lambda code) 
     ```bash
    aws cloudformation create-stack --stack-name tinyurl-dynamodb-s3 --template-body file://infra/tinyurl-dynamodb-s3.yaml --capabilities CAPABILITY_NAMED_IAM
    ```
