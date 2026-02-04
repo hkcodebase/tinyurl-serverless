@@ -22,3 +22,17 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+/.idea/.gitignore
+/infra-terraform/.terraform.lock.hcl
+/lambda/target/classes/api.yaml
+/lambda/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
+/lambda/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
+/infra-terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/5.100.0/darwin_arm64/LICENSE.txt
+/.idea/misc.xml
+/.idea/modules.xml
+/lambda/target/maven-archiver/pom.properties
+/lambda/target/classes/simplelogger.properties
+/infra-terraform/.terraform/terraform.tfstate
+/infra-terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/5.100.0/darwin_arm64/terraform-provider-aws_v5.100.0_x5
+/.idea/tinyurl-serverless.iml
+/.idea/vcs.xml

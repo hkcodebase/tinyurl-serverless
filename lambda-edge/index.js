@@ -8,7 +8,7 @@ exports.handler = async (event) => {
     const match = uri.match(hashRegex);
 
     if (match) {
-        const redirectUrl = 'REPLACE_ME' + uri;
+        const redirectUrl = 'https://api.links.hemantkumar.dev' + uri;
         console.log("Redirecting to:", redirectUrl);
         return {
             status: '302',
