@@ -36,3 +36,5 @@ replay_pid*
 /infra-terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/5.100.0/darwin_arm64/terraform-provider-aws_v5.100.0_x5
 /.idea/tinyurl-serverless.iml
 /.idea/vcs.xml
+/donot-commit.txt
+/infra-terraform/variables/prod.tfvars

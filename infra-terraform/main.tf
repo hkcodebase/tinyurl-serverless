@@ -362,6 +362,51 @@ resource "aws_api_gateway_stage" "prod" {
 }
 
 # -----------------------
+# API custom domain: api.links.hemantkumar.dev (uses existing ACM cert)
+# -----------------------
+resource "aws_api_gateway_domain_name" "api_custom" {
+  domain_name = var.api_domain_name
+
+  endpoint_configuration {
+    types = ["REGIONAL"]
+  }
+
+  regional_certificate_arn = var.acm_certificate_arn
+  security_policy          = "TLS_1_2"
+}
+
+resource "aws_api_gateway_base_path_mapping" "api_custom_prod" {
+  api_id      = aws_api_gateway_rest_api.api.id
+  stage_name  = aws_api_gateway_stage.prod.stage_name
+  domain_name = aws_api_gateway_domain_name.api_custom.domain_name
+}
+
+resource "aws_route53_record" "api_alias_a" {
+  zone_id = var.route53_zone_id
+  name    = var.api_domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_api_gateway_domain_name.api_custom.regional_domain_name
+    zone_id                = aws_api_gateway_domain_name.api_custom.regional_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "api_alias_aaaa" {
+  zone_id = var.route53_zone_id
+  name    = var.api_domain_name
+  type    = "AAAA"
+
+  alias {
+    name                   = aws_api_gateway_domain_name.api_custom.regional_domain_name
+    zone_id                = aws_api_gateway_domain_name.api_custom.regional_zone_id
+    evaluate_target_health = false
+  }
+}
+
+
+# -----------------------
 # Static UI: S3 + CloudFront + OAC + logging + Lambda@Edge
 # -----------------------
 resource "aws_s3_bucket" "static" {
@@ -456,6 +501,8 @@ resource "aws_cloudfront_distribution" "cdn" {
   default_root_object = "index.html"
   http_version        = "http2"
 
+  aliases = [var.ui_domain_name]
+
   origin {
     domain_name              = aws_s3_bucket.static.bucket_regional_domain_name
     origin_id                = "${var.project_name}-static-hosting"
@@ -507,7 +554,22 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = var.acm_certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
+  }
+}
+
+# Route53 alias: links.hemantkumar.dev -> CloudFront
+resource "aws_route53_record" "ui_alias_a" {
+  zone_id = var.route53_zone_id
+  name    = var.ui_domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.cdn.domain_name
+    zone_id                = aws_cloudfront_distribution.cdn.hosted_zone_id
+    evaluate_target_health = false
   }
 }
 

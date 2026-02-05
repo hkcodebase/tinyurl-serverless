@@ -33,3 +33,25 @@ variable "edge_code_s3_key_zip" {
   type        = string
   default     = "index.zip"
 }
+
+variable "route53_zone_id" {
+  description = "Route53 Hosted Zone ID for hemantkumar.dev (used for ACM validation + DNS records)."
+  type        = string
+}
+
+variable "acm_certificate_arn" {
+  description = "Existing ACM certificate ARN in us-east-1 that covers domains"
+  type        = string
+}
+
+variable "ui_domain_name" {
+  description = "Custom domain name for the CloudFront UI distribution."
+  type        = string
+  default     = ""
+}
+
+variable "api_domain_name" {
+  description = "Custom domain name for the API Gateway endpoint."
+  type        = string
+  default     = ""
+}
