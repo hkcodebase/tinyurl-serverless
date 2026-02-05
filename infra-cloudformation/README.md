@@ -16,7 +16,7 @@
    ```bash
     aws cloudformation describe-stacks --stack-name tinyurl-lambda --query Stacks[0].StackStatus
     ```
-   ### Copy apigateway url from output of this stack to REPLACE_ME in [index.js](lambda-edge/index.js) & [index.html](ui/index.html)
+   ### Copy apigateway url from output of this stack to REPLACE_ME in [index.js](../lambda-edge/index.js) & [index.html](../ui/index.html)
 
 4. Create index.zip of index.js in lambda-edge
    ```bash
