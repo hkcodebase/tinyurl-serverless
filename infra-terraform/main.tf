@@ -239,9 +239,9 @@ resource "aws_api_gateway_integration_response" "options_urls_200" {
   status_code = aws_api_gateway_method_response.options_urls_200.status_code
 
   response_parameters = {
-    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type'"
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
     "method.response.header.Access-Control-Allow-Methods" = "'OPTIONS,GET,POST,DELETE'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'https://links.hemantkumar.dev'"
   }
 }
 
