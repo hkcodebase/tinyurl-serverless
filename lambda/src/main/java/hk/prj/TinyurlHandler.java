@@ -44,7 +44,7 @@ public class TinyurlHandler implements RequestHandler<Map<String, Object>, Map<S
                         );
                     }
 
-                    return handleGenerateShortUrl(url, host + "/" + stage, ALLOWED_POST_ORIGIN);
+                    return handleGenerateShortUrl(url, ALLOWED_POST_ORIGIN);
                 }
                 case "GET":
                     return handleRedirectToOriginalUrl(path, host + "/" + stage);
@@ -85,7 +85,7 @@ public class TinyurlHandler implements RequestHandler<Map<String, Object>, Map<S
         return null;
     }
 
-    private Map<String, Object> handleGenerateShortUrl(String url, String host, String allowOrigin) {
+    private Map<String, Object> handleGenerateShortUrl(String url, String allowOrigin) {
         if (url == null || url.isEmpty()) {
             return generateApiResponse(400, getErrorBody("Error: 'url' is missing."), allowOrigin);
         }
