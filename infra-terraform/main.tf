@@ -127,13 +127,17 @@ resource "aws_lambda_function" "tinyurl" {
   handler       = "hk.prj.TinyurlHandler::handleRequest"
   role          = aws_iam_role.tinyurl_lambda_exec.arn
 
-  s3_bucket        = aws_s3_bucket.lambda_code.bucket
-  s3_key           = aws_s3_object.tinyurl_jar.key
+  s3_bucket = aws_s3_bucket.lambda_code.bucket
+  s3_key    = aws_s3_object.tinyurl_jar.key
   source_code_hash = filebase64sha256(var.lambda_jar_path)
 
   timeout     = 30
   memory_size = 512
   description = "Tinyurl Lambda function with Java21 runtime and restricted DynamoDB access"
+
+  snap_start {
+    apply_on = "PublishedVersions"
+  }
 
   depends_on = [
     aws_s3_object.tinyurl_jar,
