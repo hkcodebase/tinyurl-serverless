@@ -1,0 +1,7 @@
+# Runtime dependency (also pre-installed in Lambda Python runtime)
+boto3
+
+# Test dependencies
+pytest
+pytest-cov       # coverage reports
+moto[dynamodb]   # mock AWS services — no real AWS account needed

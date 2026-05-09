@@ -1,0 +1,139 @@
+name: Deploy Python Lambda
+
+# Triggers on changes to Lambda source, Terraform config, Lambda@Edge, or UI.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "lambda-python/handler.py"
+      - "lambda-python/dynamodb_service.py"
+      - "lambda-edge/index.js"
+      - "ui/index.html"
+      - "infra-terraform/main.tf"
+      - "infra-terraform/variables.tf"
+
+env:
+  AWS_REGION: us-east-1
+  ZIP_FILE: tinyurl.zip
+  TF_WORKING_DIR: infra-terraform
+
+jobs:
+  deploy:
+    name: Package & Deploy
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write  # required for OIDC token request to assume the AWS role
+
+    steps:
+      # ── 1. Checkout ───────────────────────────────────────────────────────
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # ── 2. Assume AWS role via OIDC ───────────────────────────────────────
+      # No long-lived keys stored in GitHub. GitHub exchanges a short-lived
+      # OIDC token for temporary AWS credentials by assuming the IAM role.
+      #
+      # One-time AWS setup required (see README for full instructions):
+      #   1. Create an OIDC identity provider in IAM for token.actions.githubusercontent.com
+      #   2. Create an IAM role with a trust policy scoped to this repo
+      #   3. Attach the required permissions policy to that role
+      #
+      # Required secrets:
+      #   AWS_ROLE_ARN            — IAM role to assume, e.g. arn:aws:iam::123456789:role/github-deploy
+      #   TF_BACKEND_BUCKET, TF_BACKEND_KEY
+      #   TF_VAR_route53_zone_id, TF_VAR_acm_certificate_arn
+      #   TF_VAR_allowed_origin   — CORS origin, e.g. https://links.example.com
+      #   TF_VAR_ui_domain_name   — CloudFront UI domain, e.g. links.example.com
+      #   TF_VAR_api_domain_name  — API Gateway domain, e.g. api.links.example.com
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ── 3. Substitute placeholders ────────────────────────────────────────
+      # __API_BASE_URL__ and __UI_BASE_URL__ are placeholders in source files.
+      # They are replaced here so no real domain names live in the repository.
+      - name: Substitute domain placeholders
+        env:
+          API_BASE_URL: "https://${{ secrets.TF_VAR_api_domain_name }}"
+          UI_BASE_URL: "https://${{ secrets.TF_VAR_ui_domain_name }}"
+        run: |
+          sed -i "s|__API_BASE_URL__|${API_BASE_URL}|g" lambda-edge/index.js
+          sed -i "s|__API_BASE_URL__|${API_BASE_URL}|g" ui/index.html
+          sed -i "s|__UI_BASE_URL__|${UI_BASE_URL}|g"   ui/index.html
+
+      # ── 4. Package Python Lambda zip ──────────────────────────────────────
+      # boto3 is pre-installed in the Python 3.12 runtime — no pip needed.
+      - name: Package Lambda zip
+        run: |
+          cd lambda-python
+          zip ${{ env.ZIP_FILE }} handler.py dynamodb_service.py
+          unzip -l ${{ env.ZIP_FILE }}
+
+      # ── 5. Package Lambda@Edge zip ────────────────────────────────────────
+      # Built after placeholder substitution so the real URL is baked in.
+      - name: Package Lambda@Edge zip
+        run: |
+          cd lambda-edge
+          zip index.zip index.js
+
+      # ── 6. Upload UI to S3 ────────────────────────────────────────────────
+      # Sync the substituted UI files to the static hosting bucket.
+      - name: Upload UI to S3
+        run: |
+          BUCKET="${{ vars.UI_BUCKET_NAME }}"
+          aws s3 sync ui/ s3://${BUCKET}/ --delete
+
+      # ── 7. Set up Terraform ───────────────────────────────────────────────
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.2"
+
+      # ── 8. Terraform init ─────────────────────────────────────────────────
+      - name: Terraform init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${{ secrets.TF_BACKEND_BUCKET }}" \
+            -backend-config="key=${{ secrets.TF_BACKEND_KEY }}" \
+            -backend-config="region=${{ env.AWS_REGION }}"
+
+      # ── 9. Terraform plan ─────────────────────────────────────────────────
+      - name: Terraform plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          TF_VAR_route53_zone_id:     ${{ secrets.TF_VAR_route53_zone_id }}
+          TF_VAR_acm_certificate_arn: ${{ secrets.TF_VAR_acm_certificate_arn }}
+          TF_VAR_allowed_origin:      ${{ secrets.TF_VAR_allowed_origin }}
+          TF_VAR_ui_domain_name:      ${{ secrets.TF_VAR_ui_domain_name }}
+          TF_VAR_api_domain_name:     ${{ secrets.TF_VAR_api_domain_name }}
+          TF_VAR_lambda_zip_path:     "../lambda-python/${{ env.ZIP_FILE }}"
+          TF_VAR_edge_zip_path:       "../lambda-edge/index.zip"
+        run: terraform plan -out=tfplan
+
+      # ── 10. Terraform apply ───────────────────────────────────────────────
+      - name: Terraform apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          TF_VAR_route53_zone_id:     ${{ secrets.TF_VAR_route53_zone_id }}
+          TF_VAR_acm_certificate_arn: ${{ secrets.TF_VAR_acm_certificate_arn }}
+          TF_VAR_allowed_origin:      ${{ secrets.TF_VAR_allowed_origin }}
+          TF_VAR_ui_domain_name:      ${{ secrets.TF_VAR_ui_domain_name }}
+          TF_VAR_api_domain_name:     ${{ secrets.TF_VAR_api_domain_name }}
+          TF_VAR_lambda_zip_path:     "../lambda-python/${{ env.ZIP_FILE }}"
+          TF_VAR_edge_zip_path:       "../lambda-edge/index.zip"
+        run: terraform apply -auto-approve tfplan
+
+      # ── 11. Print deployed URLs ───────────────────────────────────────────
+      - name: Print deployed URLs
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          echo "API Gateway URL:"
+          terraform output api_gateway_base_url
+          echo "CloudFront URL:"
+          terraform output cloudfront_domain_name

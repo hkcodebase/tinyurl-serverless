@@ -1,0 +1,8 @@
+{
+  "httpMethod": "GET",
+  "path": "/25b884ce",
+  "headers": {
+    "Host": "abc123.execute-api.us-east-1.amazonaws.com",
+    "Content-Type": "application/json"
+  }
+}

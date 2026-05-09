@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - URL Not Found</title>
+    <link rel="stylesheet" href="style.css">
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const originalUrl = params.get('originalUrl');
+
+            const notFoundMessage = document.getElementById('not-found-url');
+            if (originalUrl && notFoundMessage) {
+                notFoundMessage.textContent = decodeURIComponent(originalUrl);
+            } else if (notFoundMessage) {
+                notFoundMessage.textContent = window.location.href; //Fallback to current url if originalUrl is not passed.
+            }
+
+        });
+    </script>
+</head>
+<body>
+<h1>404 - URL Not Found</h1>
+<p>Oops! The URL you're looking for doesn't exist.</p>
+<p>The requested URL was: <span id="not-found-url"></span></p>
+<p><a href="/">Go Back Home</a></p>
+</body>
+</html>

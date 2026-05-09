@@ -1,0 +1,11 @@
+{
+  "httpMethod": "GET",
+  "path": "/a379a6f6",
+  "headers": {
+    "Host": "abc123.execute-api.us-east-1.amazonaws.com",
+    "Content-Type": "application/json"
+  },
+  "requestContext": {
+    "stage": "prod"
+  }
+}

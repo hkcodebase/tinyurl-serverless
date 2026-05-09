@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>link.hemantkumar.dev | Premium Link Shortener</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="main-container">
+    <h1>Welcome to links.hemantkumar.dev</h1>
+    <p class="description">
+        Stop sharing messy, multi-line links. <span style="font-weight: bold; color: var(--primary-color);">This URL Shortner</span> transforms your long web addresses into clean, manageable links in a single click.
+    </p>
+
+    <div class="features">
+        <div class="feature-card">
+            <h4>Fast & Reliable</h4>
+            <p>Instant redirection with 99.9% uptime for your links.</p>
+        </div>
+        <div class="feature-card">
+            <h4>Clean UI</h4>
+            <p>Simple, clutter-free experience for maximum productivity.</p>
+        </div>
+        <div class="feature-card">
+            <h4>One-Click Copy</h4>
+            <p>Generate, click, and paste. It's that easy.</p>
+        </div>
+    </div>
+
+    <div class="shortener-box">
+        <div class="alert-box" id="alertBox"></div>
+        <textarea id="urlInput" placeholder="https://your-long-link-here.com/very-long-path" onfocus="hideAlert()"></textarea>
+        <button onclick="generateTinyURL()">
+            Shorten URL <span class="loading-icon" id="loadingIcon"></span>
+        </button>
+    </div>
+
+    <div class="responsive">
+        <table id="responseTable">
+            <thead>
+            <tr>
+                <th>Original</th>
+                <th>Short Link</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function hideAlert() {
+        const urlInput = document.getElementById('urlInput');
+        const alertBox = document.getElementById('alertBox');
+        urlInput.classList.remove('error');
+        alertBox.style.display = 'none';
+    }
+
+    async function generateTinyURL() {
+        const urlInput = document.getElementById('urlInput');
+        const url = urlInput.value.trim();
+        const alertBox = document.getElementById('alertBox');
+        const loadingIcon = document.getElementById('loadingIcon');
+        const responseTable = document.getElementById('responseTable').querySelector('tbody');
+
+        urlInput.classList.remove('error');
+        alertBox.style.display = 'none';
+
+        if (!url) {
+            urlInput.classList.add('error');
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert-box alert-error';
+            alertBox.textContent = 'Please enter a valid URL!';
+            return;
+        }
+
+        loadingIcon.style.display = 'inline-block';
+
+        try {
+            // __API_BASE_URL__ is replaced at deploy time by the CI workflow
+            const response = await fetch('__API_BASE_URL__/urls', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: url
+            });
+
+            if (!response.ok) {
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert-box alert-error';
+                const data = await response.json();
+                alertBox.textContent = data.error || 'Something went wrong';
+            } else {
+                const data = await response.json();
+                const tinyURL = data.tinyurl;
+                // __UI_BASE_URL__ is replaced at deploy time by the CI workflow
+                const fullTinyURL = `__UI_BASE_URL__/${tinyURL}`;
+
+                const newRow = document.createElement('tr');
+                newRow.innerHTML = `
+                    <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${url}</td>
+                    <td><a href="${fullTinyURL}" target="_blank">${fullTinyURL}</a></td>
+                    <td>
+                        <button class="share-button" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy</button>
+                    </td>
+                `;
+                responseTable.prepend(newRow); // Add new links to top
+                alertBox.style.display = 'block';
+                alertBox.className = 'alert-box alert-success';
+                alertBox.textContent = 'URL shortened successfully!';
+            }
+        } catch (error) {
+            alertBox.style.display = 'block';
+            alertBox.className = 'alert-box alert-error';
+            alertBox.textContent = `Error: ${error.message}`;
+        }
+        loadingIcon.style.display = 'none';
+    }
+
+    function copyToClipboard(button, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.style.background = '#10b981';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = 'var(--primary-color)';
+            }, 2000);
+        });
+    }
+</script>
+</body>
+</html>

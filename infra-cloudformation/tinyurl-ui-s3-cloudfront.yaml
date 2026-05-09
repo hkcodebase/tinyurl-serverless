@@ -1,0 +1,179 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Resources:
+  # S3 Bucket to Store Static UI Resources
+  TinyurlStaticBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "tinyurl-static-code-bucket-${AWS::AccountId}-${AWS::Region}"
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Sub "tinyurl-static-code-bucket-${AWS::AccountId}-${AWS::Region}"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: "cloudfront.amazonaws.com"
+            Action: "s3:GetObject"
+            Resource: !Sub "arn:aws:s3:::tinyurl-static-code-bucket-${AWS::AccountId}-${AWS::Region}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Description: "Origin access control(OAC) for allowing cloudfront to access S3 bucket of Tinyurl Static"
+        Name: TinyurlStatic-OAC
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn:
+      - TinyurlStaticBucket
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !Sub "tinyurl-static-code-bucket-${AWS::AccountId}-${AWS::Region}.s3.${AWS::Region}.amazonaws.com"
+            Id: Tinyurl-static-hosting
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+        Enabled: "true"
+        DefaultRootObject: index.html
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 200
+            ResponsePagePath: /404.html
+          - ErrorCode: 403
+            ResponseCode: 200
+            ResponsePagePath: /403.html
+        HttpVersion: http2
+        DefaultCacheBehavior:
+          TargetOriginId: Tinyurl-static-hosting
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods: [ "GET", "HEAD" ]
+          ForwardedValues:
+            QueryString: false
+          LambdaFunctionAssociations:
+             -
+               EventType: viewer-request
+               LambdaFunctionARN: !Join
+                - ':'
+                - - !GetAtt [ RedirectFunction, Arn ]
+                  - !GetAtt [ RedirectFunctionVersion, Version ]
+        Logging:
+          Bucket: !Sub "tinyurl-cloudfrontlog-bucket-${AWS::AccountId}-${AWS::Region}.s3.amazonaws.com"
+          Prefix: logs/
+          IncludeCookies: false
+
+  # S3 Bucket to Store CloudFront Logs
+  TinyurlLogBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "tinyurl-cloudfrontlog-bucket-${AWS::AccountId}-${AWS::Region}"
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+  LogBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Sub "tinyurl-cloudfrontlog-bucket-${AWS::AccountId}-${AWS::Region}"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowCloudFrontToWriteLogs
+            Effect: Allow
+            Principal:
+              Service: "cloudfront.amazonaws.com"
+            Action: "s3:PutObject"
+            Resource: !Sub "arn:aws:s3:::tinyurl-cloudfrontlog-bucket-${AWS::AccountId}-${AWS::Region}/*"
+            Condition:
+              StringEquals:
+                AWS:SourceAccount: !Sub "${AWS::AccountId}"
+              ArnLike:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}/*"
+  RedirectFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - RedirectFunctionRole
+    Properties:
+      FunctionName: tinyurl-redirect-function
+      Handler: index.handler
+      Role: !GetAtt RedirectFunctionRole.Arn
+      Runtime: nodejs18.x
+      Code:
+        S3Bucket: !ImportValue TinyurlLambdaCodeBucketName
+        S3Key: index.zip
+
+  RedirectFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+                - edgelambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: lambda-execute
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: arn:aws:logs:*:*:*
+  RedirectFunctionVersion:
+    Type: AWS::Lambda::Version
+    Properties:
+      FunctionName: !GetAtt RedirectFunction.Arn
+Outputs:
+  TinyurlStaticBucket:
+    Description: "S3 Bucket to Store Tinyurl Static Resources"
+    Value: !Ref TinyurlStaticBucket
+    Export:
+      Name: TinyurlStaticBucket
+  BucketPolicy:
+    Description: "Bucket policy for static s3 bucket"
+    Value: !Ref BucketPolicy
+    Export:
+      Name: BucketPolicy
+  CloudFrontOriginAccessControl:
+    Description: "OAC for cloudfront"
+    Value: !Ref CloudFrontOriginAccessControl
+    Export:
+      Name: CloudFrontOriginAccessControl
+  CloudFrontDistribution:
+    Description: "CloudFront Distribution"
+    Value: !Ref CloudFrontDistribution
+    Export:
+      Name: CloudFrontDistribution
+  TinyurlLogBucket:
+    Description: "S3 Bucket to Store CloudFront Logs"
+    Value: !Ref TinyurlLogBucket
+    Export:
+      Name: TinyurlLogBucket
+  LogBucketPolicy:
+    Description: "Log Bucket policy"
+    Value: !Ref LogBucketPolicy
+    Export:
+      Name: LogBucketPolicy
+  CloudFrontURL:
+    Value: !GetAtt CloudFrontDistribution.DomainName
+    Description: CloudFront URL for accessing the services
+    Export:
+      Name: CloudFrontURL
+  RedirectFunctionArn:
+    Description: "Redirect Function ARN"
+    Value: !GetAtt RedirectFunction.Arn
+    Export:
+      Name: RedirectFunctionArn
