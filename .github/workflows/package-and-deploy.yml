@@ -87,7 +87,7 @@ jobs:
       # Sync the substituted UI files to the static hosting bucket.
       - name: Upload UI to S3
         run: |
-          BUCKET="${{ vars.UI_BUCKET_NAME }}"
+          BUCKET="${{ secrets.UI_BUCKET_NAME }}"
           aws s3 sync ui/ s3://${BUCKET}/ --delete
 
       # ── 7. Set up Terraform ───────────────────────────────────────────────
