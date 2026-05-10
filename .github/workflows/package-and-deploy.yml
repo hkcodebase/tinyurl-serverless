@@ -12,6 +12,7 @@ on:
       - "ui/index.html"
       - "infra-terraform/main.tf"
       - "infra-terraform/variables.tf"
+      - ".github/workflows/package-and-deploy.yml"
 
 env:
   AWS_REGION: us-east-1
