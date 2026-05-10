@@ -23,14 +23,8 @@
 hs_err_pid*
 replay_pid*
 /.idea/*
-/infra-terraform/.terraform.lock.hcl
-/lambda/target/classes/api.yaml
-/lambda/target/maven-status/maven-compiler-plugin/compile/default-compile/createdFiles.lst
-/lambda/target/maven-status/maven-compiler-plugin/compile/default-compile/inputFiles.lst
-/infra-terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/5.100.0/darwin_arm64/LICENSE.txt
-/lambda/target/maven-archiver/pom.properties
-/lambda/target/classes/simplelogger.properties
-/infra-terraform/.terraform/terraform.tfstate
-/infra-terraform/.terraform/providers/registry.terraform.io/hashicorp/aws/5.100.0/darwin_arm64/terraform-provider-aws_v5.100.0_x5
+/infra-terraform/.terraform*
+/lambda/target/*
+/infra-terraform/.terraform/*
 /donot-commit*
 /infra-terraform/variables/*
