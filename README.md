@@ -28,11 +28,6 @@ API Gateway (api.links.hemantkumar.dev)
 
 ```
 .
-├── lambda/                        # Java 21 Lambda (original implementation)
-│   └── src/main/java/hk/prj/
-│       ├── TinyurlHandler.java
-│       ├── DynamoDBService.java
-│       └── DependencyFactory.java
 ├── lambda-python/                 # Python 3.12 Lambda (current implementation)
 │   ├── handler.py                 # Entry point — routes by HTTP method
 │   ├── dynamodb_service.py        # DynamoDB read/write + SHA-256 hashing
@@ -143,10 +138,6 @@ EOF
 
 ---
 
-## Lambda — Java (Original)
-
-The original Java 21 implementation is kept in `lambda/` for reference.
-
 ### Build artifact
 
 ```bash
@@ -170,9 +161,7 @@ After deploying infrastructure, update `REPLACE_ME` in `lambda-edge/index.js` wi
 
 ---
 
-## Deployment
-
-### Option 1 — Terraform (recommended)
+## Deployment Using Terraform
 
 #### First-time setup
 
@@ -241,44 +230,6 @@ Key outputs: `api_gateway_base_url`, `cloudfront_domain_name`, `lambda_code_buck
 terraform destroy
 ```
 
----
-
-### Option 2 — CloudFormation
-
-See [infra-cloudformation/README.md](infra-cloudformation/README.md) for full step-by-step instructions.
-
-Summary:
-
-```bash
-# 1. Create DynamoDB table + S3 bucket for Lambda code
-aws cloudformation create-stack \
-  --stack-name tinyurl-dynamodb-s3 \
-  --template-body file://infra-cloudformation/tinyurl-dynamodb-s3.yaml \
-  --capabilities CAPABILITY_NAMED_IAM
-
-# 2. Package and upload Lambda zip
-cd lambda-python && zip tinyurl.zip handler.py dynamodb_service.py && cd ..
-aws s3 cp lambda-python/tinyurl.zip s3://tinyurl-lambda-code-bucket-<ACCOUNT_ID>-us-east-1/
-
-# 3. Deploy Lambda + API Gateway
-aws cloudformation create-stack \
-  --stack-name tinyurl-lambda \
-  --template-body file://infra-cloudformation/tinyurl-lambda.yaml \
-  --capabilities CAPABILITY_NAMED_IAM
-
-# 4. Package and upload Lambda@Edge zip
-cd lambda-edge && zip index.zip index.js && cd ..
-aws s3 cp lambda-edge/index.zip s3://tinyurl-lambda-code-bucket-<ACCOUNT_ID>-us-east-1/
-
-# 5. Deploy CloudFront + S3 static UI
-aws cloudformation create-stack \
-  --stack-name tinyurl-ui-s3-cloudfront \
-  --template-body file://infra-cloudformation/tinyurl-ui-s3-cloudfront.yaml \
-  --capabilities CAPABILITY_NAMED_IAM
-
-# 6. Upload UI files
-aws s3 cp ui/ s3://tinyurl-static-code-bucket-<ACCOUNT_ID>-us-east-1/ --recursive
-```
 
 After step 3, copy the API Gateway URL from the stack outputs and replace `REPLACE_ME` in `lambda-edge/index.js`, then re-zip and re-upload before step 4.
 
