@@ -83,21 +83,13 @@ jobs:
           cd lambda-edge
           zip index.zip index.js
 
-      # ── 6. Upload UI to S3 ────────────────────────────────────────────────
-      # Sync the substituted UI files to the static hosting bucket.
-      - name: Upload UI to S3
-        env:
-          BUCKET="arn:aws:s3:::${{ secrets.UI_BUCKET_NAME }}"
-        run: |
-          aws s3 sync ui/ ${BUCKET}/ --delete
-
-      # ── 7. Set up Terraform ───────────────────────────────────────────────
+      # ── 6. Set up Terraform ───────────────────────────────────────────────
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "~> 1.2"
 
-      # ── 8. Terraform init ─────────────────────────────────────────────────
+      # ── 7. Terraform init ─────────────────────────────────────────────────
       - name: Terraform init
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
@@ -106,7 +98,7 @@ jobs:
             -backend-config="key=${{ secrets.TF_BACKEND_KEY }}" \
             -backend-config="region=${{ env.AWS_REGION }}"
 
-      # ── 9. Terraform plan ─────────────────────────────────────────────────
+      # ── 8. Terraform plan ─────────────────────────────────────────────────
       - name: Terraform plan
         working-directory: ${{ env.TF_WORKING_DIR }}
         env:
@@ -119,7 +111,7 @@ jobs:
           TF_VAR_edge_zip_path:       "../lambda-edge/index.zip"
         run: terraform plan -out=tfplan
 
-      # ── 10. Terraform apply ───────────────────────────────────────────────
+      # ── 9. Terraform apply ───────────────────────────────────────────────
       - name: Terraform apply
         working-directory: ${{ env.TF_WORKING_DIR }}
         env:
@@ -132,7 +124,7 @@ jobs:
           TF_VAR_edge_zip_path:       "../lambda-edge/index.zip"
         run: terraform apply -auto-approve tfplan
 
-      # ── 11. Print deployed URLs ───────────────────────────────────────────
+      # ── 10. Print deployed URLs ───────────────────────────────────────────
       - name: Print deployed URLs
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |
