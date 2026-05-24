@@ -8,7 +8,7 @@ HASH_KEY = "hash"
 REDIRECT_URL_KEY = "redirect_url"
 
 #injected to test PR SYSTEM 
-SECRET = "123HHHDK&&jJJKDNB"
+SECRET = "x/]GlNz'Eq(@0buY"
 
 # Read region from environment variable; fall back to us-east-1
 _region = os.environ.get("AWS_REGION", "us-east-1")
