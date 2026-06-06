@@ -34,6 +34,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+
       # ── 2. Assume AWS role via OIDC ───────────────────────────────────────
       # No long-lived keys stored in GitHub. GitHub exchanges a short-lived
       # OIDC token for temporary AWS credentials by assuming the IAM role.
@@ -50,16 +51,18 @@ jobs:
       #   TF_VAR_allowed_origin   — CORS origin, e.g. https://links.example.com
       #   TF_VAR_ui_domain_name   — CloudFront UI domain, e.g. links.example.com
       #   TF_VAR_api_domain_name  — API Gateway domain, e.g. api.links.example.com
+      - name: Debug OIDC token
+        run: |
+          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
+          echo $TOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson'
+
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Debug OIDC token
-        run: |
-          curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-          "$ACTIONS_ID_TOKEN_REQUEST_URL" | jq -R 'split(".") | .[1] | @base64d | fromjson'
       # ── 3. Substitute placeholders ────────────────────────────────────────
       # __API_BASE_URL__ and __UI_BASE_URL__ are placeholders in source files.
       # They are replaced here so no real domain names live in the repository.
