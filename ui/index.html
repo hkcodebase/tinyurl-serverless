@@ -1,136 +1,385 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>link.hemantkumar.dev | Premium Link Shortener</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>links.hemantkumar.dev — URL Shortener</title>
+
+  <!-- Prevent theme flash -->
+  <script>
+    (function () {
+      var s = localStorage.getItem('hk-theme');
+      var p = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      if (s === 'dark' || (!s && p)) document.documentElement.classList.add('dark');
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* ── PAGE-SPECIFIC STYLES ── */
+
+    .shortener { margin-bottom: 48px; }
+
+    .input-row {
+      display: flex;
+    }
+
+    .url-input {
+      flex: 1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      padding: 14px 16px;
+      background: var(--bg);
+      color: var(--text);
+      border: none;
+      border-right: 1px solid var(--border);
+      outline: none;
+      resize: none;
+      height: 52px;
+      line-height: 1.5;
+    }
+
+    .url-input::placeholder { color: var(--muted); }
+    .url-input.error { background: rgba(193, 127, 36, 0.06); }
+
+    .shorten-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      padding: 14px 24px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: opacity 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shorten-btn:hover { opacity: 0.88; }
+
+    .loading-icon {
+      display: none;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--bg);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Alert */
+    .alert-box {
+      display: none;
+      font-size: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .alert-success {
+      display: block;
+      color: var(--accent);
+      background: var(--label-bg);
+      border-color: var(--accent);
+    }
+    .alert-error {
+      display: block;
+      color: #b45309;
+      background: #fef3c7;
+      border-color: #d97706;
+    }
+    html.dark .alert-error {
+      color: #fbbf24;
+      background: #1c1409;
+      border-color: #92400e;
+    }
+
+    /* Example row in How it works */
+    .example-row {
+      padding: 16px;
+      background: var(--label-bg);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .example-long  { font-size: 12px; color: var(--muted); word-break: break-all; }
+    .example-arrow { font-size: 12px; color: var(--muted); }
+    .example-short { font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: -0.01em; }
+
+    /* Results table */
+    .results { margin-bottom: 48px; }
+
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .results-table th {
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--label-bg);
+    }
+
+    .results-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .results-table tr:last-child td { border-bottom: none; }
+
+    .results-table .original-url {
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .results-table a { color: var(--accent); }
+
+    .copy-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 12px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+
+    .copy-btn:hover {
+      background: var(--text);
+      color: var(--bg);
+    }
+  </style>
 </head>
 <body>
 
-<div class="main-container">
-    <h1>Welcome to links.hemantkumar.dev</h1>
-    <p class="description">
-        Stop sharing messy, multi-line links. <span style="font-weight: bold; color: var(--primary-color);">This URL Shortner</span> transforms your long web addresses into clean, manageable links in a single click.
-    </p>
+<!-- Nav -->
+<nav class="nav">
+  <a href="https://hemantkumar.dev" class="nav-logo">HK</a>
+  <div class="nav-right">
+    <a href="https://hemantkumar.dev" class="nav-link">Portfolio</a>
+    <a href="https://github.com/hkcodebase" target="_blank" class="nav-link">GitHub</a>
+    <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
+  </div>
+</nav>
 
-    <div class="features">
-        <div class="feature-card">
-            <h4>Fast & Reliable</h4>
-            <p>Instant redirection with 99.9% uptime for your links.</p>
-        </div>
-        <div class="feature-card">
-            <h4>Clean UI</h4>
-            <p>Simple, clutter-free experience for maximum productivity.</p>
-        </div>
-        <div class="feature-card">
-            <h4>One-Click Copy</h4>
-            <p>Generate, click, and paste. It's that easy.</p>
-        </div>
-    </div>
+<main>
 
-    <div class="shortener-box">
-        <div class="alert-box" id="alertBox"></div>
-        <textarea id="urlInput" placeholder="https://your-long-link-here.com/very-long-path" onfocus="hideAlert()"></textarea>
-        <button onclick="generateTinyURL()">
-            Shorten URL <span class="loading-icon" id="loadingIcon"></span>
+  <!-- Hero -->
+  <section class="hero">
+    <p class="hero-name">links</p>
+    <p class="hero-role">URL Shortener</p>
+    <p class="hero-bio">Paste a long URL, get a clean short link. Serverless on AWS.</p>
+  </section>
+
+  <!-- Shortener -->
+  <section class="shortener">
+    <p class="label">Shorten a URL</p>
+    <div class="box">
+      <div class="alert-box" id="alertBox"></div>
+      <div class="input-row">
+        <textarea
+          id="urlInput"
+          class="url-input"
+          placeholder="https://your-long-link-here.com/very-long-path"
+          onfocus="hideAlert()"
+          rows="1"
+        ></textarea>
+        <button class="shorten-btn" onclick="generateTinyURL()">
+          Shorten
+          <span class="loading-icon" id="loadingIcon"></span>
         </button>
+      </div>
     </div>
+  </section>
 
-    <div class="responsive">
-        <table id="responseTable">
-            <thead>
-            <tr>
-                <th>Original</th>
-                <th>Short Link</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+  <!-- Results -->
+  <section class="results" id="resultsSection" style="display:none;">
+    <p class="label">Results</p>
+    <div class="box">
+      <table class="results-table" id="responseTable">
+        <thead>
+          <tr>
+            <th>Original</th>
+            <th>Short Link</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-</div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <p class="label">How it works</p>
+    <div class="box">
+      <div class="example-row">
+        <span class="example-long">https://some-very-long-url.com/with/a/long/path?and=query&amp;params=too</span>
+        <span class="example-arrow">↓ shorten</span>
+        <span class="example-short">links.hemantkumar.dev/x7k2p</span>
+      </div>
+      <div class="feature-row">
+        <span class="feature-name">Serverless</span>
+        <span class="feature-desc">AWS Lambda handles every request — no servers to manage, scales to zero.</span>
+      </div>
+      <div class="feature-row">
+        <span class="feature-name">Storage</span>
+        <span class="feature-desc">DynamoDB stores URL mappings with single-digit millisecond reads.</span>
+      </div>
+      <div class="feature-row">
+        <span class="feature-name">API</span>
+        <span class="feature-desc">API Gateway exposes a clean REST interface for creating and resolving links.</span>
+      </div>
+      <div class="feature-row">
+        <span class="feature-name">Infrastructure</span>
+        <span class="feature-desc">Fully managed via Terraform — reproducible, version-controlled, one-command deploy.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Connect -->
+  <section class="connect">
+    <p class="label">Built by</p>
+    <div class="box">
+      <div class="connect-inner">
+        <p class="connect-bio">
+          Part of a suite of projects at <a href="https://hemantkumar.dev">hemantkumar.dev</a>.
+          Source on GitHub.
+        </p>
+        <div class="connect-links">
+          <a href="https://hemantkumar.dev" target="_blank" class="connect-link">Portfolio</a>
+          <a href="https://github.com/hkcodebase" target="_blank" class="connect-link">GitHub</a>
+          <a href="https://www.linkedin.com/in/hemantk01/" target="_blank" class="connect-link">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>© 2026 Hemant Kumar</span>
+  <span>Lambda · DynamoDB · API Gateway · Terraform</span>
+</footer>
 
 <script>
-    function hideAlert() {
-        const urlInput = document.getElementById('urlInput');
-        const alertBox = document.getElementById('alertBox');
-        urlInput.classList.remove('error');
-        alertBox.style.display = 'none';
+  // Theme toggle
+  document.getElementById('theme-toggle').addEventListener('click', function () {
+    var isDark = document.documentElement.classList.toggle('dark');
+    localStorage.setItem('hk-theme', isDark ? 'dark' : 'light');
+  });
+
+  function hideAlert() {
+    const urlInput = document.getElementById('urlInput');
+    const alertBox = document.getElementById('alertBox');
+    urlInput.classList.remove('error');
+    alertBox.style.display = 'none';
+    alertBox.className = 'alert-box';
+  }
+
+  async function generateTinyURL() {
+    const urlInput = document.getElementById('urlInput');
+    const url = urlInput.value.trim();
+    const alertBox = document.getElementById('alertBox');
+    const loadingIcon = document.getElementById('loadingIcon');
+    const responseTable = document.getElementById('responseTable').querySelector('tbody');
+    const resultsSection = document.getElementById('resultsSection');
+
+    urlInput.classList.remove('error');
+    alertBox.style.display = 'none';
+    alertBox.className = 'alert-box';
+
+    if (!url) {
+      urlInput.classList.add('error');
+      alertBox.className = 'alert-box alert-error';
+      alertBox.textContent = 'Please enter a valid URL.';
+      return;
     }
 
-    async function generateTinyURL() {
-        const urlInput = document.getElementById('urlInput');
-        const url = urlInput.value.trim();
-        const alertBox = document.getElementById('alertBox');
-        const loadingIcon = document.getElementById('loadingIcon');
-        const responseTable = document.getElementById('responseTable').querySelector('tbody');
+    loadingIcon.style.display = 'inline-block';
 
-        urlInput.classList.remove('error');
-        alertBox.style.display = 'none';
+    try {
+      // __API_BASE_URL__ is replaced at deploy time by the CI workflow
+      const response = await fetch('__API_BASE_URL__/urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: url
+      });
 
-        if (!url) {
-            urlInput.classList.add('error');
-            alertBox.style.display = 'block';
-            alertBox.className = 'alert-box alert-error';
-            alertBox.textContent = 'Please enter a valid URL!';
-            return;
-        }
+      if (!response.ok) {
+        alertBox.className = 'alert-box alert-error';
+        const data = await response.json();
+        alertBox.textContent = data.error || 'Something went wrong.';
+      } else {
+        const data = await response.json();
+        const tinyURL = data.tinyurl;
+        // __UI_BASE_URL__ is replaced at deploy time by the CI workflow
+        const fullTinyURL = `__UI_BASE_URL__/${tinyURL}`;
 
-        loadingIcon.style.display = 'inline-block';
+        const newRow = document.createElement('tr');
+        newRow.innerHTML = `
+          <td class="original-url" title="${url}">${url}</td>
+          <td><a href="${fullTinyURL}" target="_blank">${fullTinyURL}</a></td>
+          <td><button class="copy-btn" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy</button></td>
+        `;
+        responseTable.prepend(newRow);
+        resultsSection.style.display = 'block';
 
-        try {
-            // __API_BASE_URL__ is replaced at deploy time by the CI workflow
-            const response = await fetch('__API_BASE_URL__/urls', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: url
-            });
-
-            if (!response.ok) {
-                alertBox.style.display = 'block';
-                alertBox.className = 'alert-box alert-error';
-                const data = await response.json();
-                alertBox.textContent = data.error || 'Something went wrong';
-            } else {
-                const data = await response.json();
-                const tinyURL = data.tinyurl;
-                // __UI_BASE_URL__ is replaced at deploy time by the CI workflow
-                const fullTinyURL = `__UI_BASE_URL__/${tinyURL}`;
-
-                const newRow = document.createElement('tr');
-                newRow.innerHTML = `
-                    <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${url}</td>
-                    <td><a href="${fullTinyURL}" target="_blank">${fullTinyURL}</a></td>
-                    <td>
-                        <button class="share-button" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy</button>
-                    </td>
-                `;
-                responseTable.prepend(newRow); // Add new links to top
-                alertBox.style.display = 'block';
-                alertBox.className = 'alert-box alert-success';
-                alertBox.textContent = 'URL shortened successfully!';
-            }
-        } catch (error) {
-            alertBox.style.display = 'block';
-            alertBox.className = 'alert-box alert-error';
-            alertBox.textContent = `Error: ${error.message}`;
-        }
-        loadingIcon.style.display = 'none';
+        alertBox.className = 'alert-box alert-success';
+        alertBox.textContent = '✓ URL shortened successfully.';
+        urlInput.value = '';
+      }
+    } catch (error) {
+      alertBox.className = 'alert-box alert-error';
+      alertBox.textContent = `Error: ${error.message}`;
     }
 
-    function copyToClipboard(button, text) {
-        navigator.clipboard.writeText(text).then(() => {
-            const originalText = button.textContent;
-            button.textContent = 'Copied!';
-            button.style.background = '#10b981';
-            setTimeout(() => {
-                button.textContent = originalText;
-                button.style.background = 'var(--primary-color)';
-            }, 2000);
-        });
-    }
+    loadingIcon.style.display = 'none';
+  }
+
+  function copyToClipboard(button, text) {
+    navigator.clipboard.writeText(text).then(() => {
+      const original = button.textContent;
+      button.textContent = 'Copied ✓';
+      button.style.background = 'var(--accent)';
+      button.style.color = 'var(--bg)';
+      button.style.borderColor = 'var(--accent)';
+      setTimeout(() => {
+        button.textContent = original;
+        button.style.background = '';
+        button.style.color = '';
+        button.style.borderColor = '';
+      }, 2000);
+    });
+  }
 </script>
+
 </body>
 </html>
