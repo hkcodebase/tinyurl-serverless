@@ -10,6 +10,7 @@ on:
       - "lambda-python/dynamodb_service.py"
       - "lambda-edge/index.js"
       - "ui/index.html"
+      - "ui/admin.html"
       - "ui/style.css"
       - "infra-terraform/main.tf"
       - "infra-terraform/variables.tf"
@@ -82,6 +83,10 @@ jobs:
           sed -i "s|__UI_BASE_URL__|${UI_BASE_URL}|g"         ui/index.html
           sed -i "s|__COGNITO_CLIENT_ID__|${COGNITO_CLIENT_ID}|g" ui/index.html
           sed -i "s|__COGNITO_DOMAIN__|${COGNITO_DOMAIN}|g"   ui/index.html
+          sed -i "s|__API_BASE_URL__|${API_BASE_URL}|g"       ui/admin.html
+          sed -i "s|__UI_BASE_URL__|${UI_BASE_URL}|g"         ui/admin.html
+          sed -i "s|__COGNITO_CLIENT_ID__|${COGNITO_CLIENT_ID}|g" ui/admin.html
+          sed -i "s|__COGNITO_DOMAIN__|${COGNITO_DOMAIN}|g"   ui/admin.html
 
       # ── 4. Package Python Lambda zip ──────────────────────────────────────
       # boto3 is pre-installed in the Python 3.12 runtime — no pip needed.

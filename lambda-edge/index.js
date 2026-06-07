@@ -6,7 +6,7 @@ exports.handler = async (event) => {
 
     // ── Passthrough routes — serve directly from S3 ──────────────────────────
     // These must not be treated as short URL hashes.
-    const passthroughRoutes = ['/', '/callback', '/index.html'];
+    const passthroughRoutes = ['/', '/callback', '/index.html', '/admin', '/admin.html'];
     if (passthroughRoutes.includes(uri) || uri.includes('.')) {
         console.log("Passthrough, forwarding request:", uri);
         return request;
