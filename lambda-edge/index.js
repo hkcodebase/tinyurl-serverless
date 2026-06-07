@@ -6,8 +6,19 @@ exports.handler = async (event) => {
 
     // ── Passthrough routes — serve directly from S3 ──────────────────────────
     // These must not be treated as short URL hashes.
-    const passthroughRoutes = ['/', '/callback', '/index.html', '/admin', '/admin.html'];
-    if (passthroughRoutes.includes(uri) || uri.includes('.')) {
+    // Rewrite clean paths to their HTML files
+    const rewrites = {
+      '/admin':    '/admin.html',
+      '/callback': '/index.html',  // callback handled by JS in index.html
+    };
+    if (rewrites[uri]) {
+        request.uri = rewrites[uri];
+        console.log("Rewriting", uri, "→", request.uri);
+        return request;
+    }
+
+    // Static assets and root — pass through as-is
+    if (uri === '/' || uri.includes('.')) {
         console.log("Passthrough, forwarding request:", uri);
         return request;
     }
