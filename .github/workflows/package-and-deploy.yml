@@ -72,12 +72,16 @@ jobs:
       # They are replaced here so no real domain names live in the repository.
       - name: Substitute domain placeholders
         env:
-          API_BASE_URL: "https://${{ secrets.TF_VAR_api_domain_name }}"
-          UI_BASE_URL: "https://${{ secrets.TF_VAR_ui_domain_name }}"
+          API_BASE_URL:        "https://${{ secrets.TF_VAR_api_domain_name }}"
+          UI_BASE_URL:         "https://${{ secrets.TF_VAR_ui_domain_name }}"
+          COGNITO_CLIENT_ID:   ${{ secrets.COGNITO_CLIENT_ID }}
+          COGNITO_DOMAIN:      ${{ secrets.COGNITO_DOMAIN }}
         run: |
-          sed -i "s|__API_BASE_URL__|${API_BASE_URL}|g" lambda-edge/index.js
-          sed -i "s|__API_BASE_URL__|${API_BASE_URL}|g" ui/index.html
-          sed -i "s|__UI_BASE_URL__|${UI_BASE_URL}|g"   ui/index.html
+          sed -i "s|__API_BASE_URL__|${API_BASE_URL}|g"       lambda-edge/index.js
+          sed -i "s|__API_BASE_URL__|${API_BASE_URL}|g"       ui/index.html
+          sed -i "s|__UI_BASE_URL__|${UI_BASE_URL}|g"         ui/index.html
+          sed -i "s|__COGNITO_CLIENT_ID__|${COGNITO_CLIENT_ID}|g" ui/index.html
+          sed -i "s|__COGNITO_DOMAIN__|${COGNITO_DOMAIN}|g"   ui/index.html
 
       # ── 4. Package Python Lambda zip ──────────────────────────────────────
       # boto3 is pre-installed in the Python 3.12 runtime — no pip needed.

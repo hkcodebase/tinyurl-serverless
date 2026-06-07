@@ -14,6 +14,11 @@
     })();
   </script>
 
+  <!-- Cognito config — __COGNITO_CLIENT_ID__ and __COGNITO_DOMAIN__ replaced at deploy time -->
+  <meta name="cognito-client-id" content="__COGNITO_CLIENT_ID__">
+  <meta name="cognito-domain"    content="__COGNITO_DOMAIN__">
+  <meta name="ui-base-url"       content="__UI_BASE_URL__">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -173,7 +178,6 @@
     </div>
   </div>
   <div class="nav-right">
-    <a href="https://hemantkumar.dev" target="_blank" class="nav-link">hemantkumar.dev</a>
     <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="nav-link">GitHub</a>
     <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
   </div>
@@ -275,7 +279,6 @@
         <div class="built-by-col">
           <p class="built-by-col-label">Author</p>
           <p class="built-by-col-name">Hemant Kumar</p>
-          <p class="built-by-col-desc">Data &amp; AI Engineer</p>
           <a href="https://hemantkumar.dev" target="_blank" class="connect-link">hemantkumar.dev ↗</a>
         </div>
         <div class="built-by-col">
@@ -331,9 +334,13 @@
     loadingIcon.style.display = 'inline-block';
 
     try {
+      const token = sessionStorage.getItem('hk_id_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const response = await fetch('__API_BASE_URL__/urls', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: url
       });
 
@@ -378,6 +385,66 @@
       }, 2000);
     });
   }
+</script>
+
+<script>
+  // ── Minimal Cognito auth ──────────────────────────────────────────────────
+  // Silently handles login/callback. No visible UI change for guests.
+  // Logged-in users have their token sent with shortening requests.
+
+  (function () {
+    var clientId  = document.querySelector('meta[name="cognito-client-id"]').content;
+    var domain    = document.querySelector('meta[name="cognito-domain"]').content;
+    var uiBase    = document.querySelector('meta[name="ui-base-url"]').content;
+    var redirectUri = uiBase + '/callback';
+
+    // ── Handle Cognito callback ─────────────────────────────────────────────
+    // Cognito redirects to /callback?code=xxx after login
+    if (window.location.pathname === '/callback') {
+      var code = new URLSearchParams(window.location.search).get('code');
+      if (code) {
+        // Exchange auth code for tokens
+        fetch('https://' + domain + '/oauth2/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type:   'authorization_code',
+            client_id:    clientId,
+            code:         code,
+            redirect_uri: redirectUri,
+          }).toString(),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.id_token) {
+            sessionStorage.setItem('hk_id_token', data.id_token);
+          }
+          // Redirect back to home after storing token
+          window.location.replace(uiBase);
+        })
+        .catch(function () {
+          window.location.replace(uiBase);
+        });
+      } else {
+        window.location.replace(uiBase);
+      }
+      return; // Stop page rendering during callback
+    }
+
+    // ── Token refresh check ─────────────────────────────────────────────────
+    // If token is expired, clear it — user becomes guest until next login
+    var token = sessionStorage.getItem('hk_id_token');
+    if (token) {
+      try {
+        var payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp < Math.floor(Date.now() / 1000)) {
+          sessionStorage.removeItem('hk_id_token');
+        }
+      } catch (e) {
+        sessionStorage.removeItem('hk_id_token');
+      }
+    }
+  })();
 </script>
 
 <script data-goatcounter="https://hk-links.goatcounter.com/count"
