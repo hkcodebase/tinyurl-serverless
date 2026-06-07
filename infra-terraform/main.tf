@@ -389,6 +389,10 @@ resource "aws_api_gateway_deployment" "deployment" {
     ]))
   }
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
   depends_on = [
     aws_api_gateway_integration.post_urls,
     #aws_api_gateway_integration.delete_urls,
