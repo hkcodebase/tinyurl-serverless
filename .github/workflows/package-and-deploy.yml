@@ -10,6 +10,7 @@ on:
       - "lambda-python/dynamodb_service.py"
       - "lambda-edge/index.js"
       - "ui/index.html"
+      - "ui/style.css"
       - "infra-terraform/main.tf"
       - "infra-terraform/variables.tf"
       - ".github/workflows/package-and-deploy.yml"
@@ -29,11 +30,19 @@ jobs:
       contents: read
       id-token: write  # required for OIDC token request to assume the AWS role
 
+    env:
+      TF_VAR_route53_zone_id:     ${{ secrets.TF_VAR_route53_zone_id }}
+      TF_VAR_acm_certificate_arn: ${{ secrets.TF_VAR_acm_certificate_arn }}
+      TF_VAR_allowed_origin:      ${{ secrets.TF_VAR_allowed_origin }}
+      TF_VAR_ui_domain_name:      ${{ secrets.TF_VAR_ui_domain_name }}
+      TF_VAR_api_domain_name:     ${{ secrets.TF_VAR_api_domain_name }}
+      TF_VAR_lambda_zip_path:     "../lambda-python/tinyurl.zip"
+      TF_VAR_edge_zip_path:       "../lambda-edge/index.zip"
+
     steps:
       # ── 1. Checkout ───────────────────────────────────────────────────────
       - name: Checkout code
         uses: actions/checkout@v4
-
 
       # ── 2. Assume AWS role via OIDC ───────────────────────────────────────
       # No long-lived keys stored in GitHub. GitHub exchanges a short-lived
@@ -51,12 +60,6 @@ jobs:
       #   TF_VAR_allowed_origin   — CORS origin, e.g. https://links.example.com
       #   TF_VAR_ui_domain_name   — CloudFront UI domain, e.g. links.example.com
       #   TF_VAR_api_domain_name  — API Gateway domain, e.g. api.links.example.com
-      - name: Debug OIDC token
-        run: |
-          TOKEN=$(curl -s -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com")
-          echo $TOKEN | jq -R 'split(".") | .[1] | @base64d | fromjson'
-
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -81,7 +84,6 @@ jobs:
         run: |
           cd lambda-python
           zip ${{ env.ZIP_FILE }} handler.py dynamodb_service.py
-          unzip -l ${{ env.ZIP_FILE }}
 
       # ── 5. Package Lambda@Edge zip ────────────────────────────────────────
       # Built after placeholder substitution so the real URL is baked in.
@@ -108,30 +110,23 @@ jobs:
       # ── 8. Terraform plan ─────────────────────────────────────────────────
       - name: Terraform plan
         working-directory: ${{ env.TF_WORKING_DIR }}
-        env:
-          TF_VAR_route53_zone_id:     ${{ secrets.TF_VAR_route53_zone_id }}
-          TF_VAR_acm_certificate_arn: ${{ secrets.TF_VAR_acm_certificate_arn }}
-          TF_VAR_allowed_origin:      ${{ secrets.TF_VAR_allowed_origin }}
-          TF_VAR_ui_domain_name:      ${{ secrets.TF_VAR_ui_domain_name }}
-          TF_VAR_api_domain_name:     ${{ secrets.TF_VAR_api_domain_name }}
-          TF_VAR_lambda_zip_path:     "../lambda-python/${{ env.ZIP_FILE }}"
-          TF_VAR_edge_zip_path:       "../lambda-edge/index.zip"
         run: terraform plan -out=tfplan
 
-      # ── 9. Terraform apply ───────────────────────────────────────────────
+      # ── 9. Terraform apply ────────────────────────────────────────────────
       - name: Terraform apply
         working-directory: ${{ env.TF_WORKING_DIR }}
-        env:
-          TF_VAR_route53_zone_id:     ${{ secrets.TF_VAR_route53_zone_id }}
-          TF_VAR_acm_certificate_arn: ${{ secrets.TF_VAR_acm_certificate_arn }}
-          TF_VAR_allowed_origin:      ${{ secrets.TF_VAR_allowed_origin }}
-          TF_VAR_ui_domain_name:      ${{ secrets.TF_VAR_ui_domain_name }}
-          TF_VAR_api_domain_name:     ${{ secrets.TF_VAR_api_domain_name }}
-          TF_VAR_lambda_zip_path:     "../lambda-python/${{ env.ZIP_FILE }}"
-          TF_VAR_edge_zip_path:       "../lambda-edge/index.zip"
         run: terraform apply -auto-approve tfplan
 
-      # ── 10. Print deployed URLs ───────────────────────────────────────────
+      # ── 10. Invalidate CloudFront cache ──────────────────────────────────────
+      - name: Invalidate CloudFront cache
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
+          aws cloudfront create-invalidation \
+            --distribution-id $DISTRIBUTION_ID \
+            --paths "/index.html" "/style.css"
+
+      # ── 11. Print deployed URLs ───────────────────────────────────────────
       - name: Print deployed URLs
         working-directory: ${{ env.TF_WORKING_DIR }}
         run: |

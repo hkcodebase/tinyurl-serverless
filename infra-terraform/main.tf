@@ -619,3 +619,19 @@ resource "aws_s3_bucket_policy" "cf_logs_policy" {
 
   depends_on = [aws_cloudfront_distribution.cdn]
 }
+
+resource "aws_s3_object" "ui_html" {
+  bucket       = aws_s3_bucket.static.id
+  key          = "index.html"
+  source       = "../ui/index.html"
+  content_type = "text/html"
+  etag         = filemd5("../ui/index.html")
+}
+
+resource "aws_s3_object" "ui_css" {
+  bucket       = aws_s3_bucket.static.id
+  key          = "style.css"
+  source       = "../ui/style.css"
+  content_type = "text/css"
+  etag         = filemd5("../ui/style.css")
+}
