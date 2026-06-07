@@ -134,7 +134,7 @@ jobs:
           DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
           aws cloudfront create-invalidation \
             --distribution-id $DISTRIBUTION_ID \
-            --paths "/index.html" "/style.css"
+            --paths "/index.html" "/style.css", "/admin.html"
 
       # ── 11. Print deployed URLs ───────────────────────────────────────────
       - name: Print deployed URLs
