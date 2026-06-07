@@ -140,7 +140,7 @@ resource "aws_lambda_function" "tinyurl" {
   environment {
     variables = {
       DYNAMODB_TABLE        = "Url"
-      ALLOWED_ORIGIN        = "https://${var.ui_domain_name}"
+      ALLOWED_ORIGIN        = var.allowed_origin
       COGNITO_REGION        = var.region
       COGNITO_USER_POOL_ID  = aws_cognito_user_pool.tinyurl.id
       COGNITO_ADMIN_GROUP   = "admin"
