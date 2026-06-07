@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>links.hemantkumar.dev — URL Shortener</title>
+  <meta name="description" content="Serverless URL shortener on AWS. Paste a long URL, get a clean short link instantly." />
 
-  <!-- Prevent theme flash -->
   <script>
     (function () {
       var s = localStorage.getItem('hk-theme');
@@ -16,22 +16,18 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* ── PAGE-SPECIFIC STYLES ── */
+    body { padding-top: 0; }
 
-    .shortener { margin-bottom: 48px; }
-
-    .input-row {
-      display: flex;
-    }
-
+    .input-row { display: flex; }
     .url-input {
       flex: 1;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px;
+      font-size: 14px;
+      font-weight: 500;
       padding: 14px 16px;
       background: var(--bg);
       color: var(--text);
@@ -42,19 +38,18 @@
       height: 52px;
       line-height: 1.5;
     }
-
-    .url-input::placeholder { color: var(--muted); }
-    .url-input.error { background: rgba(193, 127, 36, 0.06); }
+    .url-input::placeholder { color: var(--muted); font-weight: 400; }
+    .url-input.error { background: rgba(249, 115, 22, 0.06); }
 
     .shorten-btn {
       font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
       padding: 14px 24px;
-      background: var(--accent);
-      color: var(--bg);
+      background: #16a34a;
+      color: #ffffff;
       border: none;
       cursor: pointer;
       white-space: nowrap;
@@ -64,89 +59,49 @@
       align-items: center;
       gap: 8px;
     }
-
     .shorten-btn:hover { opacity: 0.88; }
 
     .loading-icon {
       display: none;
       width: 12px;
       height: 12px;
-      border: 2px solid var(--bg);
+      border: 2px solid #ffffff;
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
     }
-
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Alert */
     .alert-box {
       display: none;
-      font-size: 12px;
+      font-size: 13px;
+      font-weight: 600;
       padding: 10px 16px;
       border-bottom: 1px solid var(--border);
     }
-    .alert-success {
-      display: block;
-      color: var(--accent);
-      background: var(--label-bg);
-      border-color: var(--accent);
-    }
-    .alert-error {
-      display: block;
-      color: #b45309;
-      background: #fef3c7;
-      border-color: #d97706;
-    }
-    html.dark .alert-error {
-      color: #fbbf24;
-      background: #1c1409;
-      border-color: #92400e;
-    }
+    .alert-success { display: block; color: var(--accent); border-color: var(--accent); }
+    .alert-error   { display: block; color: #dc2626; border-color: #ef4444; }
+    html.dark .alert-error { color: #f87171; border-color: #991b1b; }
 
-    /* Example row in How it works */
-    .example-row {
-      padding: 16px;
-      background: var(--label-bg);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .example-long  { font-size: 12px; color: var(--muted); word-break: break-all; }
-    .example-arrow { font-size: 12px; color: var(--muted); }
-    .example-short { font-size: 15px; font-weight: 600; color: var(--accent); letter-spacing: -0.01em; }
-
-    /* Results table */
-    .results { margin-bottom: 48px; }
-
-    .results-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
+    .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .results-table th {
       text-align: left;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--accent);
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
-      background: var(--label-bg);
     }
-
     .results-table td {
       padding: 12px 16px;
       border-bottom: 1px solid var(--border);
       color: var(--text);
+      font-weight: 500;
       vertical-align: middle;
     }
-
     .results-table tr:last-child td { border-bottom: none; }
-
     .results-table .original-url {
       max-width: 280px;
       overflow: hidden;
@@ -155,36 +110,71 @@
       color: var(--muted);
       font-size: 12px;
     }
-
-    .results-table a { color: var(--accent); }
+    .results-table a { color: var(--accent); font-weight: 600; }
 
     .copy-btn {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
-      font-weight: 600;
-      padding: 4px 12px;
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
+      font-weight: 700;
+      padding: 4px 14px;
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
       cursor: pointer;
-      transition: background 0.12s, color 0.12s;
+      transition: opacity 0.12s;
       white-space: nowrap;
     }
+    .copy-btn:hover { opacity: 0.88; }
 
-    .copy-btn:hover {
-      background: var(--text);
-      color: var(--bg);
+    /* Built by two-column */
+    .built-by-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .built-by-col {
+      padding: 20px;
+    }
+    .built-by-col:first-child { border-right: 1px solid var(--border); }
+    .built-by-col-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .built-by-col-name {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .built-by-col-desc {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 560px) {
+      .built-by-grid { grid-template-columns: 1fr; }
+      .built-by-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
     }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
 <nav class="nav">
-  <a href="https://hemantkumar.dev" class="nav-logo">HK</a>
+  <div class="nav-logo-wrap">
+    <div class="nav-logo-bar"></div>
+    <div>
+      <a href="/" class="nav-logo">links.hemantkumar.dev</a>
+      <div style="font-size:11px;font-weight:500;color:var(--muted);margin-top:-4px;">URL Shortener</div>
+    </div>
+  </div>
   <div class="nav-right">
-    <a href="https://hemantkumar.dev" class="nav-link">Portfolio</a>
-    <a href="https://github.com/hkcodebase" target="_blank" class="nav-link">GitHub</a>
+    <a href="https://hemantkumar.dev" target="_blank" class="nav-link">hemantkumar.dev</a>
+    <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="nav-link">GitHub</a>
     <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
   </div>
 </nav>
@@ -193,9 +183,21 @@
 
   <!-- Hero -->
   <section class="hero">
-    <p class="hero-name">links</p>
-    <p class="hero-role">URL Shortener</p>
-    <p class="hero-bio">Paste a long URL, get a clean short link. Serverless on AWS.</p>
+    <p class="hero-name">Shorten. Share. Done.</p>
+    <p class="hero-role">Paste a long URL — get a clean short link powered by serverless AWS.</p>
+    <div class="stat-bar">
+      <div class="stat"><div class="stat-val">~50ms</div><div class="stat-name">Avg redirect</div></div>
+      <div class="stat"><div class="stat-val">99.9%</div><div class="stat-name">Uptime</div></div>
+      <div class="stat"><div class="stat-val">$0</div><div class="stat-name">Cost at idle</div></div>
+      <div class="stat"><div class="stat-val">∞</div><div class="stat-name">Links</div></div>
+    </div>
+    <div class="tags">
+      <span class="tag">Lambda</span>
+      <span class="tag">DynamoDB</span>
+      <span class="tag">API Gateway</span>
+      <span class="tag">Terraform</span>
+      <span class="tag">CloudFront</span>
+    </div>
   </section>
 
   <!-- Shortener -->
@@ -207,7 +209,7 @@
         <textarea
           id="urlInput"
           class="url-input"
-          placeholder="https://your-long-link-here.com/very-long-path"
+          placeholder="https://your-long-url.com/paste-it-here"
           onfocus="hideAlert()"
           rows="1"
         ></textarea>
@@ -236,7 +238,12 @@
     </div>
   </section>
 
-  <!-- Features -->
+  <!-- Divider -->
+  <div style="border-top:2px solid var(--border);margin:8px 0 40px;position:relative;">
+    <span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--bg);padding:0 16px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);">About this project</span>
+  </div>
+
+  <!-- How it works -->
   <section class="features">
     <p class="label">How it works</p>
     <div class="box">
@@ -246,37 +253,36 @@
         <span class="example-short">links.hemantkumar.dev/x7k2p</span>
       </div>
       <div class="feature-row">
-        <span class="feature-name">Serverless</span>
-        <span class="feature-desc">AWS Lambda handles every request — no servers to manage, scales to zero.</span>
+        <span class="feature-name">Compute</span>
+        <span class="feature-desc">Serverless Lambda — scales to zero, no cold start overhead.</span>
       </div>
       <div class="feature-row">
         <span class="feature-name">Storage</span>
-        <span class="feature-desc">DynamoDB stores URL mappings with single-digit millisecond reads.</span>
+        <span class="feature-desc">DynamoDB — sub-millisecond URL lookups at any scale.</span>
       </div>
       <div class="feature-row">
-        <span class="feature-name">API</span>
-        <span class="feature-desc">API Gateway exposes a clean REST interface for creating and resolving links.</span>
-      </div>
-      <div class="feature-row">
-        <span class="feature-name">Infrastructure</span>
-        <span class="feature-desc">Fully managed via Terraform — reproducible, version-controlled, one-command deploy.</span>
+        <span class="feature-name">Delivery</span>
+        <span class="feature-desc">CloudFront CDN — global edge, HTTPS enforced.</span>
       </div>
     </div>
   </section>
 
-  <!-- Connect -->
+  <!-- Built by -->
   <section class="connect">
     <p class="label">Built by</p>
     <div class="box">
-      <div class="connect-inner">
-        <p class="connect-bio">
-          Part of a suite of projects at <a href="https://hemantkumar.dev">hemantkumar.dev</a>.
-          Source on GitHub.
-        </p>
-        <div class="connect-links">
-          <a href="https://hemantkumar.dev" target="_blank" class="connect-link">Portfolio</a>
-          <a href="https://github.com/hkcodebase" target="_blank" class="connect-link">GitHub</a>
-          <a href="https://www.linkedin.com/in/hemantk01/" target="_blank" class="connect-link">LinkedIn</a>
+      <div class="built-by-grid">
+        <div class="built-by-col">
+          <p class="built-by-col-label">Author</p>
+          <p class="built-by-col-name">Hemant Kumar</p>
+          <p class="built-by-col-desc">Data &amp; AI Engineer</p>
+          <a href="https://hemantkumar.dev" target="_blank" class="connect-link">hemantkumar.dev ↗</a>
+        </div>
+        <div class="built-by-col">
+          <p class="built-by-col-label">Source Code</p>
+          <p class="built-by-col-name">tinyurl-serverless</p>
+          <p class="built-by-col-desc">Lambda · DynamoDB · Terraform</p>
+          <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="connect-link">github/tinyurl-serverless ↗</a>
         </div>
       </div>
     </div>
@@ -290,7 +296,6 @@
 </footer>
 
 <script>
-  // Theme toggle
   document.getElementById('theme-toggle').addEventListener('click', function () {
     var isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('hk-theme', isDark ? 'dark' : 'light');
@@ -326,7 +331,6 @@
     loadingIcon.style.display = 'inline-block';
 
     try {
-      // __API_BASE_URL__ is replaced at deploy time by the CI workflow
       const response = await fetch('__API_BASE_URL__/urls', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -340,7 +344,6 @@
       } else {
         const data = await response.json();
         const tinyURL = data.tinyurl;
-        // __UI_BASE_URL__ is replaced at deploy time by the CI workflow
         const fullTinyURL = `__UI_BASE_URL__/${tinyURL}`;
 
         const newRow = document.createElement('tr');
@@ -368,18 +371,17 @@
     navigator.clipboard.writeText(text).then(() => {
       const original = button.textContent;
       button.textContent = 'Copied ✓';
-      button.style.background = 'var(--accent)';
-      button.style.color = 'var(--bg)';
-      button.style.borderColor = 'var(--accent)';
+      button.style.opacity = '0.7';
       setTimeout(() => {
         button.textContent = original;
-        button.style.background = '';
-        button.style.color = '';
-        button.style.borderColor = '';
+        button.style.opacity = '';
       }, 2000);
     });
   }
 </script>
+
+<script data-goatcounter="https://hk-links.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 
 </body>
 </html>

@@ -1,14 +1,11 @@
 /*
- * hk.css — Shared design system
- * hemantkumar.dev · snarky-squirrel · and future sites
+ * style.css — links.hemantkumar.dev
+ * Slate + Orange palette · JetBrains Mono
  *
- * Usage:
- *   <link rel="stylesheet" href="hk.css">
+ * Font (add to <head>):
+ *   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
  *
- * Font (add to <head> before this stylesheet):
- *   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
- *
- * Theme toggle (add to <head> before page renders to prevent flash):
+ * Theme toggle — add to <head>:
  *   <script>
  *     (function () {
  *       var s = localStorage.getItem('hk-theme');
@@ -17,61 +14,49 @@
  *     })();
  *   </script>
  *
- * Theme toggle button (add anywhere in your nav):
- *   <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">◐</button>
- *
- * Theme toggle script (add before </body>):
+ * Theme toggle script — add before </body>:
  *   <script>
  *     document.getElementById('theme-toggle').addEventListener('click', function () {
  *       var isDark = document.documentElement.classList.toggle('dark');
  *       localStorage.setItem('hk-theme', isDark ? 'dark' : 'light');
  *     });
  *   </script>
- *
- * Section pattern:
- *   <section class="section">
- *     <p class="label">Section Title</p>
- *     <div class="box">
- *       <!-- rows go here -->
- *     </div>
- *   </section>
  */
 
-
 /* ─────────────────────────────────────────────────────────
-   THEME — CSS variables
+   THEME
    ───────────────────────────────────────────────────────── */
 :root {
-  --bg:        #faf8f2;
-  --text:      #1a1208;
-  --muted:     #8a7a60;
-  --border:    #d8cebc;
-  --label-bg:  #f0ead8;
-  --accent:    #c17f24;
-  --row-hover: #ede4cc;
-  --link:      #1a1208;
+  --bg:        #f8f9fa;
+  --text:      #0f172a;
+  --muted:     #334155;
+  --border:    #cbd5e1;
+  --label-bg:  #f1f5f9;
+  --nav-bg:    #f1f5f9;
+  --accent:    #f97316;
+  --action:    #0ea5e9;
+  --tag-bg:    #f1f5f9;
+  --link:      #0f172a;
+  --row-hover: #e2e8f0;
 }
 html.dark {
-  --bg:        #0f0d09;
-  --text:      #e8e0cc;
-  --muted:     #6b5e48;
-  --border:    #2e2518;
-  --label-bg:  #1e1a10;
-  --accent:    #e09535;
-  --row-hover: #1a1508;
-  --link:      #e8e0cc;
+  --bg:        #0c111a;
+  --text:      #f1f5f9;
+  --muted:     #94a3b8;
+  --border:    #1e293b;
+  --label-bg:  #131c2b;
+  --nav-bg:    #0f172a;
+  --accent:    #fb923c;
+  --action:    #38bdf8;
+  --tag-bg:    #131c2b;
+  --link:      #f1f5f9;
+  --row-hover: #1e293b;
 }
-
 
 /* ─────────────────────────────────────────────────────────
    RESET
    ───────────────────────────────────────────────────────── */
-*, *::before, *::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 /* ─────────────────────────────────────────────────────────
    BASE
@@ -79,25 +64,18 @@ html.dark {
 body {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 15px;
+  font-weight: 500;
   line-height: 1.8;
   background: var(--bg);
   color: var(--text);
   max-width: 1020px;
   margin: 0 auto;
-  padding: 52px 44px 100px;
+  padding: 0 0 100px;
   transition: background 0.2s ease, color 0.2s ease;
 }
 
-a {
-  color: var(--link);
-  text-decoration: none;
-}
-a:hover {
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
+a { color: var(--link); text-decoration: none; }
+a:hover { text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 
 /* ─────────────────────────────────────────────────────────
    NAV
@@ -106,12 +84,27 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 64px;
+  padding: 0 44px 0 0;
+  margin-bottom: 0;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo-wrap {
+  display: flex;
+  align-items: center;
+}
+.nav-logo-bar {
+  width: 4px;
+  height: 52px;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-right: 20px;
 }
 .nav-logo {
-  font-weight: 600;
-  font-size: 16px;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+  text-decoration: none;
 }
 .nav-right {
   display: flex;
@@ -120,391 +113,193 @@ a:hover {
 }
 .nav-link {
   font-size: 13px;
+  font-weight: 600;
   color: var(--muted);
   transition: color 0.15s;
 }
-.nav-link:hover {
-  background: var(--text);
-  color: var(--bg);
-  text-decoration: none;
-}
+.nav-link:hover { color: var(--accent); text-decoration: none; }
 .theme-btn {
   background: none;
   border: 1px solid var(--border);
   color: var(--muted);
   font-family: inherit;
   font-size: 13px;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
   padding: 4px 8px;
   transition: color 0.15s, border-color 0.15s;
 }
-.theme-btn:hover {
+.theme-btn:hover { color: var(--text); border-color: var(--text); }
+
+/* ─────────────────────────────────────────────────────────
+   MAIN CONTENT PADDING
+   ───────────────────────────────────────────────────────── */
+main { padding: 0 44px; }
+
+/* ─────────────────────────────────────────────────────────
+   HERO
+   ───────────────────────────────────────────────────────── */
+.hero {
+  padding: 40px 0 36px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+.hero-name {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--text);
-  border-color: var(--text);
+  margin-bottom: 6px;
+}
+.hero-role {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 24px;
 }
 
+/* stat bar */
+.stat-bar {
+  display: flex;
+  border: 1px solid var(--border);
+}
+.stat {
+  flex: 1;
+  padding: 14px 18px;
+  border-right: 1px solid var(--border);
+}
+.stat:last-child { border-right: none; }
+.stat-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.stat-name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* tech tags */
+.tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+.tag {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--tag-bg);
+}
 
 /* ─────────────────────────────────────────────────────────
-   SECTION
-   Each section: .section wrapper > .label pill > .box content
-   ───────────────────────────────────────────────────────── */
-.section  { margin-bottom: 48px; }
-.work     { margin-bottom: 48px; }
-.scores   { margin-bottom: 48px; }
-.pipeline { margin-bottom: 48px; }
-.setup    { margin-bottom: 48px; }
-.features { margin-bottom: 48px; }
-.expertise{ margin-bottom: 48px; }
-.connect  { margin-bottom: 48px; }
-
-
-/* ─────────────────────────────────────────────────────────
-   SECTION LABEL — pill tag above the box
+   SECTION LABEL
    ───────────────────────────────────────────────────────── */
 .label {
   display: inline-block;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--accent);
-  background: var(--label-bg);
+  background: transparent;
   border: 1px solid var(--accent);
   padding: 4px 12px;
   margin-bottom: 12px;
 }
 
-
 /* ─────────────────────────────────────────────────────────
-   BOX — single border wrapping section content
-   Rows inside use only internal border-bottom dividers;
-   no :first-of-type top border needed.
+   BOX
    ───────────────────────────────────────────────────────── */
-.box {
-  border: 1px solid var(--border);
-}
-
+.box { border: 1px solid var(--border); }
 
 /* ─────────────────────────────────────────────────────────
-   HERO — open layout, no box
+   SECTION SPACING
    ───────────────────────────────────────────────────────── */
-.hero {
-  margin-bottom: 48px;
-}
-.hero-name {
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 6px;
-}
-.hero-role {
-  font-size: 16px;
-  color: var(--muted);
-  margin-bottom: 32px;
-}
-.hero-bio {
-  max-width: 720px;
-  margin-bottom: 24px;
-  color: var(--text);
-}
-.hero-meta {
-  font-size: 14px;
-  color: var(--muted);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.hero-meta a { color: var(--text); }
-/* alias used on personal site */
-.hero-now {
-  font-size: 14px;
-  color: var(--muted);
-}
-.hero-now a { color: var(--text); }
-
+.section  { margin-bottom: 40px; }
+.shortener{ margin-bottom: 40px; }
+.results  { margin-bottom: 40px; }
+.features { margin-bottom: 40px; }
+.connect  { margin-bottom: 40px; }
 
 /* ─────────────────────────────────────────────────────────
-   ROW — generic interactive row (inside .box)
-   Apply .row to an <a> or <div> inside a .box.
-   Internal dividers: border-bottom on each row, none on last.
-   ───────────────────────────────────────────────────────── */
-.row {
-  display: grid;
-  column-gap: 20px;
-  padding: 20px 16px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  transition: background 0.12s;
-  cursor: pointer;
-}
-.row:last-child { border-bottom: none; }
-.row:hover {
-  background: var(--text);
-  color: var(--bg);
-  text-decoration: none;
-}
-.row:hover .row-sub,
-.row:hover .row-meta,
-.row:hover .row-num,
-.row:hover .row-year {
-  color: var(--bg);
-  opacity: 0.55;
-}
-.row:hover .row-title,
-.row:hover .row-arrow {
-  color: var(--bg);
-  opacity: 1;
-}
-
-.row-num   { font-size: 13px; color: var(--muted); padding-top: 2px; }
-.row-body  { min-width: 0; }
-.row-title { font-weight: 500; margin-bottom: 3px; }
-.row-sub   { font-size: 13px; color: var(--muted); margin-bottom: 5px; }
-.row-meta  { font-size: 13px; color: var(--muted); }
-.row-right {
-  text-align: right;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-  padding-top: 2px;
-}
-.row-year  { font-size: 13px; color: var(--muted); white-space: nowrap; }
-.row-arrow { font-size: 15px; color: var(--muted); transition: color 0.12s; }
-.row:hover .row-arrow { color: var(--bg); }
-
-/* ── Project row aliases (hemantkumar.dev) ── */
-.project {
-  display: grid;
-  grid-template-columns: 32px 1fr auto;
-  column-gap: 20px;
-  padding: 22px 16px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text);
-  transition: background 0.12s;
-  cursor: pointer;
-}
-.project:last-child { border-bottom: none; }
-.project:hover {
-  background: var(--text);
-  color: var(--bg);
-  text-decoration: none;
-}
-.project:hover .project-title,
-.project:hover .project-arrow { color: var(--bg); }
-.project:hover .project-num,
-.project:hover .project-tags,
-.project:hover .project-desc,
-.project:hover .project-year  { color: var(--bg); opacity: 0.55; }
-
-.project-num   { font-size: 13px; color: var(--muted); padding-top: 2px; }
-.project-body  { min-width: 0; }
-.project-title { font-weight: 500; margin-bottom: 3px; }
-.project-tags  { font-size: 13px; color: var(--muted); margin-bottom: 5px; }
-.project-desc  { font-size: 13px; color: var(--muted); }
-.project-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; padding-top: 2px; }
-.project-year  { font-size: 13px; color: var(--muted); white-space: nowrap; }
-.project-arrow { font-size: 15px; color: var(--muted); transition: color 0.12s; }
-
-
-/* ─────────────────────────────────────────────────────────
-   SCORE BARS (inside .box)
-   ───────────────────────────────────────────────────────── */
-.score-row {
-  display: grid;
-  grid-template-columns: 160px 1fr 48px;
-  column-gap: 20px;
-  align-items: center;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-}
-.score-row:last-child { border-bottom: none; }
-.score-name  { color: var(--muted); }
-.score-bar-wrap {
-  height: 2px;
-  background: var(--border);
-}
-.score-bar-fill {
-  height: 100%;
-  background: var(--accent);
-  transition: width 0.8s ease;
-}
-.score-val {
-  text-align: right;
-  font-weight: 600;
-  color: var(--accent);
-}
-
-
-/* ─────────────────────────────────────────────────────────
-   PIPELINE / STEPS (inside .box)
-   ───────────────────────────────────────────────────────── */
-.pipe-row {
-  display: grid;
-  grid-template-columns: 28px 1fr auto;
-  column-gap: 20px;
-  padding: 18px 16px;
-  border-bottom: 1px solid var(--border);
-}
-.pipe-row:last-child { border-bottom: none; }
-.pipe-num   { font-size: 13px; color: var(--muted); padding-top: 2px; }
-.pipe-body  { min-width: 0; }
-.pipe-name  { font-weight: 500; margin-bottom: 3px; }
-.pipe-desc  { font-size: 13px; color: var(--muted); }
-.pipe-badge { font-size: 11px; color: var(--muted); white-space: nowrap; padding-top: 4px; text-align: right; }
-
-
-/* ─────────────────────────────────────────────────────────
-   FORMULA BLOCK (inside .box, after pipe rows)
-   ───────────────────────────────────────────────────────── */
-.formula-block {
-  padding: 18px 16px;
-  border-top: 1px solid var(--border);
-  background: var(--label-bg);
-}
-.formula-label {
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 8px;
-}
-.formula-text {
-  font-size: 13px;
-  color: var(--text);
-  line-height: 2;
-}
-.formula-note {
-  font-size: 12px;
-  color: var(--muted);
-  margin-top: 6px;
-}
-
-
-/* ─────────────────────────────────────────────────────────
-   SETUP ROWS (inside .box)
-   ───────────────────────────────────────────────────────── */
-.setup-row {
-  display: grid;
-  grid-template-columns: 200px 1fr 1fr auto;
-  column-gap: 20px;
-  padding: 16px 16px;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
-  color: var(--text);
-  transition: background 0.12s;
-  cursor: pointer;
-}
-.setup-row:last-child { border-bottom: none; }
-.setup-row:hover {
-  background: var(--text);
-  color: var(--bg);
-  text-decoration: none;
-}
-.setup-row:hover .setup-label,
-.setup-row:hover .setup-db,
-.setup-row:hover .setup-arrow { color: var(--bg); opacity: 0.7; }
-.setup-row:hover .setup-name  { color: var(--bg); opacity: 1; }
-.setup-name  { font-weight: 500; }
-.setup-label { color: var(--muted); }
-.setup-db    { color: var(--muted); }
-.setup-arrow { color: var(--muted); text-align: right; }
-
-
-/* ─────────────────────────────────────────────────────────
-   SKILLS GRID (inside .box with padding)
-   ───────────────────────────────────────────────────────── */
-.skills-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 44px 72px;
-  padding: 24px 16px;
-}
-.skill-group-name {
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-}
-.skill-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-.skill-list li {
-  font-size: 13px;
-  color: var(--muted);
-}
-.skill-list li::before {
-  content: "– ";
-  color: var(--border);
-}
-
-
-/* ─────────────────────────────────────────────────────────
-   FEATURE ROWS (inside .box)
+   FEATURE ROWS
    ───────────────────────────────────────────────────────── */
 .feature-row {
   display: grid;
   grid-template-columns: 200px 1fr;
   column-gap: 20px;
-  padding: 16px 16px;
+  padding: 14px 16px;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
 }
 .feature-row:last-child { border-bottom: none; }
-.feature-name { font-weight: 500; color: var(--text); }
-.feature-desc { color: var(--muted); }
-
+.feature-name { font-weight: 700; color: var(--text); }
+.feature-desc { font-weight: 500; color: var(--muted); }
 
 /* ─────────────────────────────────────────────────────────
-   CONNECT / LINKS (inside .box with padding)
+   EXAMPLE ROW
+   ───────────────────────────────────────────────────────── */
+.example-row {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.example-long  { font-size: 12px; font-weight: 500; color: var(--muted); word-break: break-all; }
+.example-arrow { font-size: 12px; font-weight: 600; color: var(--muted); }
+.example-short { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: -0.01em; }
+
+/* ─────────────────────────────────────────────────────────
+   CONNECT
    ───────────────────────────────────────────────────────── */
 .connect-inner  { padding: 20px 16px; }
-.connect-bio    { color: var(--muted); max-width: 460px; margin-bottom: 16px; font-size: 13px; }
+.connect-bio    { font-weight: 500; color: var(--muted); max-width: 460px; margin-bottom: 16px; font-size: 13px; }
 .connect-links  { display: flex; gap: 28px; }
-.connect-link   { font-size: 13px; }
-.connect-link:hover {
-  background: var(--text);
-  color: var(--bg);
-  text-decoration: none;
-}
-
+.connect-link   { font-size: 13px; font-weight: 600; color: var(--text); }
+.connect-link:hover { color: var(--accent); text-decoration: none; }
 
 /* ─────────────────────────────────────────────────────────
    FOOTER
    ───────────────────────────────────────────────────────── */
 footer {
-  padding-top: 20px;
+  padding: 20px 44px 0;
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 11.5px;
+  font-size: 12px;
+  font-weight: 500;
   color: var(--muted);
 }
 
+/* ─────────────────────────────────────────────────────────
+   SCROLLBAR
+   ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 
 /* ─────────────────────────────────────────────────────────
    RESPONSIVE
    ───────────────────────────────────────────────────────── */
 @media (max-width: 560px) {
-  body         { padding: 32px 20px 64px; }
-  .nav-right   { gap: 16px; }
-  .skills-grid { grid-template-columns: 1fr; gap: 28px; }
-  .score-row   { grid-template-columns: 120px 1fr 40px; }
-  .pipe-row    { grid-template-columns: 24px 1fr; }
-  .pipe-badge  { display: none; }
-  .setup-row   { grid-template-columns: 1fr auto; }
-  .setup-label,
-  .setup-db    { display: none; }
-  .feature-row { grid-template-columns: 1fr; gap: 4px; }
-  .project     { grid-template-columns: 24px 1fr auto; column-gap: 12px; }
+  main          { padding: 0 20px; }
+  footer        { padding: 20px 20px 0; }
+  .nav          { padding: 0 20px 0 0; }
+  .nav-right    { gap: 16px; }
+  .stat-bar     { flex-wrap: wrap; }
+  .stat         { flex: 1 1 45%; }
+  .feature-row  { grid-template-columns: 1fr; gap: 4px; }
 }
