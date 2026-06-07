@@ -686,6 +686,14 @@ resource "aws_s3_object" "ui_css" {
   etag         = filemd5("../ui/style.css")
 }
 
+resource "aws_s3_object" "ui_admin" {
+  bucket       = aws_s3_bucket.static.id
+  key          = "admin.html"
+  source       = "../ui/admin.html"
+  content_type = "text/html"
+  etag         = filemd5("../ui/admin.html")
+}
+
 resource "aws_iam_role_policy" "cognito_read" {
   name = "CognitoReadPolicy"
   role = aws_iam_role.tinyurl_lambda_exec.id
