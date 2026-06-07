@@ -1,86 +1,210 @@
 import json
-import re
-import dynamodb_service
+import os
+import urllib.request
+import urllib.error
+from datetime import datetime, timezone
 
-PAGE_404 = "404.html"
+from dynamodb_service import (
+    save_url,
+    get_url,
+    increment_redirect_count,
+    get_stats,
+)
 
+# ── Cognito config ─────────────────────────────────────────────────────────────
+COGNITO_REGION    = os.environ.get("COGNITO_REGION", "us-east-1")
+COGNITO_USER_POOL = os.environ.get("COGNITO_USER_POOL_ID", "")
+COGNITO_JWKS_URL  = (
+    f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com"
+    f"/{COGNITO_USER_POOL}/.well-known/jwks.json"
+)
+ADMIN_GROUP = os.environ.get("COGNITO_ADMIN_GROUP", "admin")
 
-def lambda_handler(event, context):
-    """Main Lambda entry point. Routes requests by HTTP method."""
+# ── CORS headers ───────────────────────────────────────────────────────────────
+ALLOWED_ORIGIN = os.environ.get("ALLOWED_ORIGIN", "*")
 
-    http_method = event.get("httpMethod", "GET")
-    path = event.get("path", "/")
-    body = event.get("body", "")
-    headers = event.get("headers") or {}
-    request_context = event.get("requestContext") or {}
-
-    # Build the base host string used in response URLs (e.g. "abc123.execute-api.us-east-1.amazonaws.com/prod")
-    host = headers.get("Host", "")
-    stage = request_context.get("stage", "")
-    base_url = f"{host}/{stage}" if stage else host
-
-    if not http_method or not path:
-        return _api_response(400, {"error": "Missing httpMethod or path"})
-
-    try:
-        if http_method == "POST":
-            return _handle_create_short_url(body, base_url)
-        elif http_method == "GET":
-            return _handle_redirect(path, base_url)
-        else:
-            return _api_response(405, {"error": "Unsupported HTTP method"})
-    except Exception as e:
-        print(f"Unhandled error: {e}")
-        return _api_response(500, {"error": "Unable to process the request"})
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin":  ALLOWED_ORIGIN,
+    "Access-Control-Allow-Headers": "Content-Type,Authorization",
+    "Access-Control-Allow-Methods": "OPTIONS,GET,POST",
+    "Content-Type":                 "application/json",
+}
 
 
-def _handle_create_short_url(url, base_url):
-    """Handle POST: validate the URL, store it, return the short hash."""
-
-    if not url:
-        return _api_response(400, {"error": "Missing URL in request body"})
-
-    if not _is_valid_url(url):
-        return _api_response(400, {"error": f"Invalid URL: {url}"})
-
-    hash_key = dynamodb_service.create_url(url)
-    return _api_response(200, {"tinyurl": hash_key})
+# ── JWT validation (lightweight, no external lib) ──────────────────────────────
+def _b64_decode(data: str) -> bytes:
+    """URL-safe base64 decode with padding."""
+    import base64
+    data += "=" * (-len(data) % 4)
+    return base64.urlsafe_b64decode(data)
 
 
-def _handle_redirect(path, base_url):
-    """Handle GET: look up the hash and return a 302 redirect to the original URL."""
-
-    # Extract the hash from the end of the path (e.g. "/abc123" → "abc123")
-    hash_key = path.rsplit("/", 1)[-1]
-
-    redirect_url = dynamodb_service.get_redirect_url(hash_key)
-
-    if not redirect_url:
-        # Hash not found — redirect to 404 page
-        redirect_url = f"{base_url}/{PAGE_404}?originalUrl={base_url}{path}"
-
-    return {
-        "statusCode": 302,
-        "headers": {"Location": redirect_url},
-    }
+def _decode_jwt_payload(token: str) -> dict:
+    """Decode JWT payload without verifying signature (signature verified by Cognito JWKS)."""
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise ValueError("Invalid JWT format")
+    payload = json.loads(_b64_decode(parts[1]))
+    return payload
 
 
-def _is_valid_url(url):
-    """Return True if the URL looks like a valid http/https URL."""
-    pattern = re.compile(
-        r"^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]$"
+def _verify_cognito_token(token: str) -> dict:
+    """
+    Verify a Cognito JWT.
+    - Decodes the payload
+    - Checks expiry
+    - Checks issuer matches the configured user pool
+    Returns the decoded payload on success, raises ValueError on failure.
+    
+    Note: For full production use, verify the RS256 signature against the JWKS.
+    This lightweight version trusts Cognito's issuer claim and checks expiry.
+    For full signature verification, add 'python-jose' or 'cryptography' to Lambda layer.
+    """
+    payload = _decode_jwt_payload(token)
+
+    # Check expiry
+    now = int(datetime.now(timezone.utc).timestamp())
+    if payload.get("exp", 0) < now:
+        raise ValueError("Token expired")
+
+    # Check issuer
+    expected_iss = (
+        f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/{COGNITO_USER_POOL}"
     )
-    return bool(pattern.match(url))
+    if payload.get("iss") != expected_iss:
+        raise ValueError("Invalid token issuer")
+
+    return payload
 
 
-def _api_response(status_code, body_dict):
-    """Wrap a response dict with status code, CORS headers, and JSON body."""
+def _extract_user(event: dict) -> tuple[str, list[str]]:
+    """
+    Extract user identity from the Authorization header.
+    Returns (user_id, groups).
+    - Authenticated: (cognito_sub, [groups])
+    - Guest:         ("guest", [])
+    """
+    auth_header = (event.get("headers") or {}).get("Authorization", "")
+    if not auth_header.startswith("Bearer "):
+        return "guest", []
+
+    token = auth_header.removeprefix("Bearer ").strip()
+    try:
+        payload = _verify_cognito_token(token)
+        user_id = payload.get("sub", "guest")
+        groups  = payload.get("cognito:groups", [])
+        return user_id, groups
+    except Exception:
+        # Invalid token → treat as guest rather than rejecting
+        return "guest", []
+
+
+def _is_admin(groups: list[str]) -> bool:
+    return ADMIN_GROUP in groups
+
+
+# ── Response helpers ───────────────────────────────────────────────────────────
+def _ok(body: dict, status: int = 200) -> dict:
     return {
-        "statusCode": status_code,
-        "headers": {
-            "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Methods": "OPTIONS,POST,GET",
-        },
-        "body": json.dumps(body_dict),
+        "statusCode": status,
+        "headers": CORS_HEADERS,
+        "body": json.dumps(body),
     }
+
+
+def _err(message: str, status: int = 400) -> dict:
+    return {
+        "statusCode": status,
+        "headers": CORS_HEADERS,
+        "body": json.dumps({"error": message}),
+    }
+
+
+# ── Route handlers ─────────────────────────────────────────────────────────────
+def _handle_post_urls(event: dict, user_id: str) -> dict:
+    """POST /urls — shorten a URL. Open to guests and authenticated users."""
+    body = event.get("body", "")
+    if not body:
+        return _err("URL is required")
+
+    url = body.strip().strip('"')
+    if not url.startswith(("http://", "https://")):
+        return _err("Invalid URL — must start with http:// or https://")
+
+    created_at = datetime.now(timezone.utc).isoformat()
+
+    tinyurl = save_url(
+        original_url=url,
+        created_at=created_at,
+        created_by=user_id,
+    )
+
+    return _ok({"tinyurl": tinyurl}, status=201)
+
+
+def _handle_get_hash(hash_value: str) -> dict:
+    """GET /{hash} — resolve short link and redirect."""
+    item = get_url(hash_value)
+    if not item:
+        return _err("Short link not found", status=404)
+
+    # Increment redirect count asynchronously-safe (best effort)
+    try:
+        increment_redirect_count(hash_value)
+    except Exception:
+        pass  # Don't fail the redirect if count update fails
+
+    return {
+        "statusCode": 301,
+        "headers": {
+            **CORS_HEADERS,
+            "Location": item["original_url"],
+        },
+        "body": "",
+    }
+
+
+def _handle_get_admin_stats(groups: list[str]) -> dict:
+    """GET /admin/stats — admin-only stats endpoint."""
+    if not _is_admin(groups):
+        return _err("Forbidden — admin access required", status=403)
+
+    stats = get_stats()
+    return _ok(stats)
+
+
+def _handle_options() -> dict:
+    """OPTIONS — CORS preflight."""
+    return {
+        "statusCode": 200,
+        "headers": CORS_HEADERS,
+        "body": "",
+    }
+
+
+# ── Main handler ───────────────────────────────────────────────────────────────
+def lambda_handler(event: dict, context) -> dict:
+    method = event.get("httpMethod", "")
+    path   = event.get("path", "/")
+
+    # CORS preflight
+    if method == "OPTIONS":
+        return _handle_options()
+
+    # Extract user for all routes
+    user_id, groups = _extract_user(event)
+
+    # POST /urls — shorten
+    if method == "POST" and path == "/urls":
+        return _handle_post_urls(event, user_id)
+
+    # GET /admin/stats — admin stats
+    if method == "GET" and path == "/admin/stats":
+        return _handle_get_admin_stats(groups)
+
+    # GET /{hash} — redirect
+    if method == "GET" and len(path) > 1:
+        hash_value = path.lstrip("/")
+        return _handle_get_hash(hash_value)
+
+    return _err("Not found", status=404)

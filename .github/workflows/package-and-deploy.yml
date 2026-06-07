@@ -13,6 +13,7 @@ on:
       - "ui/style.css"
       - "infra-terraform/main.tf"
       - "infra-terraform/variables.tf"
+      - "infra-terraform/cognito.tf"
       - ".github/workflows/package-and-deploy.yml"
 
 env:

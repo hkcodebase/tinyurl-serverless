@@ -134,12 +134,24 @@ resource "aws_lambda_function" "tinyurl" {
 
   timeout     = 30
   memory_size = 256
-  description = "Tinyurl Lambda function with Python 3.12 runtime and restricted DynamoDB access"
+  description = "Tinyurl Lambda — URL shortener with Cognito auth and stats"
+
+  # ── NEW: Cognito env vars ──────────────────────────────────────────────────
+  environment {
+    variables = {
+      DYNAMODB_TABLE        = "Url"
+      ALLOWED_ORIGIN        = "https://${var.ui_domain_name}"
+      COGNITO_REGION        = var.region
+      COGNITO_USER_POOL_ID  = aws_cognito_user_pool.tinyurl.id
+      COGNITO_ADMIN_GROUP   = "admin"
+    }
+  }
 
   depends_on = [
     aws_s3_object.tinyurl_zip,
     aws_iam_role_policy.dynamodb_access,
-    aws_iam_role_policy_attachment.lambda_basic
+    aws_iam_role_policy_attachment.lambda_basic,
+    aws_cognito_user_pool.tinyurl,
   ]
 }
 
@@ -308,6 +320,35 @@ resource "aws_api_gateway_integration_response" "options_hash_200" {
   }
 }
 
+
+resource "aws_api_gateway_resource" "admin" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_rest_api.api.root_resource_id
+  path_part   = "admin"
+}
+
+resource "aws_api_gateway_resource" "admin_stats" {
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  parent_id   = aws_api_gateway_resource.admin.id
+  path_part   = "stats"
+}
+
+resource "aws_api_gateway_method" "get_admin_stats" {
+  rest_api_id   = aws_api_gateway_rest_api.api.id
+  resource_id   = aws_api_gateway_resource.admin_stats.id
+  http_method   = "GET"
+  authorization = "NONE"  # Auth handled in Lambda via JWT validation
+}
+
+resource "aws_api_gateway_integration" "get_admin_stats" {
+  rest_api_id             = aws_api_gateway_rest_api.api.id
+  resource_id             = aws_api_gateway_resource.admin_stats.id
+  http_method             = aws_api_gateway_method.get_admin_stats.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = local.apigw_lambda_uri
+}
+
 resource "aws_lambda_permission" "apigw_invoke" {
   statement_id  = "AllowExecutionFromAPIGateway"
   action        = "lambda:InvokeFunction"
@@ -341,7 +382,10 @@ resource "aws_api_gateway_deployment" "deployment" {
       aws_api_gateway_method_response.options_hash_200.id,
 
       aws_api_gateway_integration_response.options_urls_200.id,
-      aws_api_gateway_integration_response.options_hash_200.id
+      aws_api_gateway_integration_response.options_hash_200.id,
+
+      aws_api_gateway_method.get_admin_stats.id,
+      aws_api_gateway_integration.get_admin_stats.id
     ]))
   }
 
@@ -352,7 +396,9 @@ resource "aws_api_gateway_deployment" "deployment" {
     aws_api_gateway_integration.options_urls,
     aws_api_gateway_integration.options_hash,
     aws_api_gateway_integration_response.options_urls_200,
-    aws_api_gateway_integration_response.options_hash_200
+    aws_api_gateway_integration_response.options_hash_200,
+    aws_api_gateway_method.get_admin_stats,
+    aws_api_gateway_integration.get_admin_stats
   ]
 }
 
@@ -634,4 +680,18 @@ resource "aws_s3_object" "ui_css" {
   source       = "../ui/style.css"
   content_type = "text/css"
   etag         = filemd5("../ui/style.css")
+}
+
+resource "aws_iam_role_policy" "cognito_read" {
+  name = "CognitoReadPolicy"
+  role = aws_iam_role.tinyurl_lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["cognito-idp:GetUser", "cognito-idp:AdminGetUser"]
+      Resource = aws_cognito_user_pool.tinyurl.arn
+    }]
+  })
 }
