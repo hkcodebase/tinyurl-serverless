@@ -4,13 +4,23 @@ exports.handler = async (event) => {
 
     console.log("Incoming request URI:", uri);
 
-    const hashRegex = /^\/([a-f0-9]+)$/i;
+    // ── Passthrough routes — serve directly from S3 ──────────────────────────
+    // These must not be treated as short URL hashes.
+    const passthroughRoutes = ['/', '/callback', '/index.html'];
+    if (passthroughRoutes.includes(uri) || uri.includes('.')) {
+        console.log("Passthrough, forwarding request:", uri);
+        return request;
+    }
+
+    // ── Short URL hash — redirect to API ─────────────────────────────────────
+    // Matches any path segment e.g. /x7k2p /aB3dEf
+    const hashRegex = /^\/([a-zA-Z0-9]+)$/;
     const match = uri.match(hashRegex);
 
     if (match) {
         // __API_BASE_URL__ is replaced at deploy time by the CI workflow
         const redirectUrl = '__API_BASE_URL__' + uri;
-        console.log("Redirecting to:", redirectUrl);
+        console.log("Redirecting to API:", redirectUrl);
         return {
             status: '302',
             statusDescription: 'Found',
@@ -19,8 +29,8 @@ exports.handler = async (event) => {
             },
         };
     }
-    else {
-        console.log("No match, forwarding request.");
-        return request;
-    }
+
+    // ── Fallback — forward to S3 ──────────────────────────────────────────────
+    console.log("No match, forwarding request:", uri);
+    return request;
 };
