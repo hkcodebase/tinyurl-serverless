@@ -296,7 +296,12 @@
   }
 
   function redirectToLogin() {
-    const loginUrl = `https://${domain}/login?client_id=${clientId}&response_type=code&scope=email+openid+profile&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const loginUrl = `https://${domain}/login`
+            + `?client_id=${clientId}`
+            + `&response_type=code`
+            + `&scope=email+openid+profile`
+            + `&redirect_uri=${encodeURIComponent(uiBase + '/admin')}`
+            + `&state=admin`;
     window.location.href = loginUrl;
   }
 
