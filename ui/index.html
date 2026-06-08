@@ -25,8 +25,42 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    body { padding-top: 0; }
+    /* ── full-screen two-column layout ── */
+    body { max-width: none; padding: 0; }
 
+    .page-wrap {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      flex: 1;
+      min-height: 0;
+    }
+
+    /* left panel */
+    .panel-left {
+      border-right: 1px solid var(--border);
+      padding: 20px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    /* right panel */
+    .panel-right {
+      padding: 20px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    /* ── shortener input ── */
     .input-row { display: flex; }
     .url-input {
       flex: 1;
@@ -88,6 +122,7 @@
     .alert-error   { display: block; color: #dc2626; border-color: #ef4444; }
     html.dark .alert-error { color: #f87171; border-color: #991b1b; }
 
+    /* ── results table ── */
     .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .results-table th {
       text-align: left;
@@ -108,7 +143,7 @@
     }
     .results-table tr:last-child td { border-bottom: none; }
     .results-table .original-url {
-      max-width: 280px;
+      max-width: 200px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -131,172 +166,176 @@
     }
     .copy-btn:hover { opacity: 0.88; }
 
-    /* Built by two-column */
-    .built-by-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-    }
-    .built-by-col {
-      padding: 20px;
-    }
-    .built-by-col:first-child { border-right: 1px solid var(--border); }
-    .built-by-col-label {
+
+    /* ── panel heading bar ── */
+    .panel-heading {
       font-size: 11px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
     }
-    .built-by-col-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 4px;
+    .panel-heading span {
+      color: var(--accent);
+      margin-right: 8px;
     }
-    .built-by-col-desc {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--muted);
-      margin-bottom: 16px;
+
+    /* ── override global spacing for compact layout ── */
+    body { line-height: 1.5; }
+    .label { margin-bottom: 6px; padding: 3px 10px; font-size: 10px; }
+    .shortener, .features, .results, .connect, .hero { margin-bottom: 0; }
+    .stat { padding: 8px 12px; }
+    .stat-val { font-size: 16px; }
+    .stat-name { font-size: 9px; }
+    .feature-row { padding: 8px 12px; font-size: 12px; }
+    .feature-name { font-size: 12px; }
+    .example-row { padding: 10px 12px; }
+    .example-long { font-size: 11px; }
+    .example-short { font-size: 13px; }
+    .results-table th, .results-table td { padding: 9px 12px; }
+    .panel-heading { padding-bottom: 10px; font-size: 10px; }
+
+    /* ── footer full-width ── */
+    footer { padding: 12px 32px 0; font-size: 11px; }
+
+    /* ── responsive: stack below 860px ── */
+    @media (max-width: 860px) {
+      .split { grid-template-columns: 1fr; }
+      .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+      .panel-left, .panel-right { padding: 28px 20px; }
+      footer { padding: 20px 20px 0; }
     }
 
     @media (max-width: 560px) {
-      .built-by-grid { grid-template-columns: 1fr; }
-      .built-by-col:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+      .nav { padding: 0 20px 0 0; }
+      .nav-right { gap: 16px; }
+      .stat-bar { flex-wrap: wrap; }
+      .stat { flex: 1 1 45%; }
+      .feature-row { grid-template-columns: 1fr; gap: 4px; }
     }
   </style>
 </head>
 <body>
 
-<nav class="nav">
-  <div class="nav-logo-wrap">
-    <div class="nav-logo-bar"></div>
-    <div>
-      <a href="/" class="nav-logo">links.hemantkumar.dev</a>
-      <div style="font-size:11px;font-weight:500;color:var(--muted);margin-top:-4px;">URL Shortener</div>
-    </div>
-  </div>
-  <div class="nav-right">
-    <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="nav-link">GitHub</a>
-    <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
-  </div>
-</nav>
+<div class="page-wrap">
 
-<main>
-
-  <!-- Hero -->
-  <section class="hero">
-    <p class="hero-name">Shorten. Share. Done.</p>
-    <p class="hero-role">Paste a long URL — get a clean short link powered by serverless AWS.</p>
-    <div class="stat-bar">
-      <div class="stat"><div class="stat-val">~50ms</div><div class="stat-name">Avg redirect</div></div>
-      <div class="stat"><div class="stat-val">99.9%</div><div class="stat-name">Uptime</div></div>
-      <div class="stat"><div class="stat-val">$0</div><div class="stat-name">Cost at idle</div></div>
-      <div class="stat"><div class="stat-val">∞</div><div class="stat-name">Links</div></div>
-    </div>
-    <div class="tags">
-      <span class="tag">Lambda</span>
-      <span class="tag">DynamoDB</span>
-      <span class="tag">API Gateway</span>
-      <span class="tag">Terraform</span>
-      <span class="tag">CloudFront</span>
-    </div>
-  </section>
-
-  <!-- Shortener -->
-  <section class="shortener">
-    <p class="label">Shorten a URL</p>
-    <div class="box">
-      <div class="alert-box" id="alertBox"></div>
-      <div class="input-row">
-        <textarea
-          id="urlInput"
-          class="url-input"
-          placeholder="https://your-long-url.com/paste-it-here"
-          onfocus="hideAlert()"
-          rows="1"
-        ></textarea>
-        <button class="shorten-btn" onclick="generateTinyURL()">
-          Shorten
-          <span class="loading-icon" id="loadingIcon"></span>
-        </button>
+  <nav class="nav">
+    <div class="nav-logo-wrap">
+      <div class="nav-logo-bar"></div>
+      <div>
+        <a href="/" class="nav-logo">links.hemantkumar.dev</a>
+        <div style="font-size:11px;font-weight:500;color:var(--muted);margin-top:-4px;">URL Shortener</div>
       </div>
     </div>
-  </section>
-
-  <!-- Results -->
-  <section class="results" id="resultsSection" style="display:none;">
-    <p class="label">Results</p>
-    <div class="box">
-      <table class="results-table" id="responseTable">
-        <thead>
-          <tr>
-            <th>Original</th>
-            <th>Short Link</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div class="nav-right">
+      <a href="https://hemantkumar.dev" target="_blank" class="nav-link">Hemant Kumar</a>
+      <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="nav-link">GitHub</a>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
     </div>
-  </section>
+  </nav>
 
-  <!-- Divider -->
-  <div style="border-top:2px solid var(--border);margin:8px 0 40px;position:relative;">
-    <span style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--bg);padding:0 16px;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);">About this project</span>
-  </div>
+  <div class="split">
 
-  <!-- How it works -->
-  <section class="features">
-    <p class="label">How it works</p>
-    <div class="box">
-      <div class="example-row">
-        <span class="example-long">https://some-very-long-url.com/with/a/long/path?and=query&amp;params=too</span>
-        <span class="example-arrow">↓ shorten</span>
-        <span class="example-short">links.hemantkumar.dev/x7k2p</span>
-      </div>
-      <div class="feature-row">
-        <span class="feature-name">Compute</span>
-        <span class="feature-desc">Serverless Lambda — scales to zero, no cold start overhead.</span>
-      </div>
-      <div class="feature-row">
-        <span class="feature-name">Storage</span>
-        <span class="feature-desc">DynamoDB — sub-millisecond URL lookups at any scale.</span>
-      </div>
-      <div class="feature-row">
-        <span class="feature-name">Delivery</span>
-        <span class="feature-desc">CloudFront CDN — global edge, HTTPS enforced.</span>
-      </div>
-    </div>
-  </section>
+    <!-- ── LEFT: Shorten + Results ── -->
+    <div class="panel-left">
 
-  <!-- Built by -->
-  <section class="connect">
-    <p class="label">Built by</p>
-    <div class="box">
-      <div class="built-by-grid">
-        <div class="built-by-col">
-          <p class="built-by-col-label">Author</p>
-          <p class="built-by-col-name">Hemant Kumar</p>
-          <a href="https://hemantkumar.dev" target="_blank" class="connect-link">hemantkumar.dev ↗</a>
+      <div class="panel-heading"><span>→</span>URL Shortener</div>
+
+      <section class="shortener">
+        <p class="label">Shorten a URL</p>
+        <div class="box">
+          <div class="alert-box" id="alertBox"></div>
+          <div class="input-row">
+            <textarea
+              id="urlInput"
+              class="url-input"
+              placeholder="https://your-long-url.com/paste-it-here"
+              onfocus="hideAlert()"
+              rows="1"
+            ></textarea>
+            <button class="shorten-btn" onclick="generateTinyURL()">
+              Shorten
+              <span class="loading-icon" id="loadingIcon"></span>
+            </button>
+          </div>
         </div>
-        <div class="built-by-col">
-          <p class="built-by-col-label">Source Code</p>
-          <p class="built-by-col-name">tinyurl-serverless</p>
-          <p class="built-by-col-desc">Lambda · DynamoDB · Terraform</p>
-          <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="connect-link">github/tinyurl-serverless ↗</a>
+      </section>
+
+      <section class="results" id="resultsSection" style="display:none;">
+        <p class="label">Results</p>
+        <div class="box">
+          <table class="results-table" id="responseTable">
+            <thead>
+              <tr>
+                <th>Original</th>
+                <th>Short Link</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
         </div>
-      </div>
+      </section>
+
     </div>
-  </section>
 
-</main>
+    <!-- ── RIGHT: Stats + How it works ── -->
+    <div class="panel-right">
 
-<footer>
-  <span>© 2026 Hemant Kumar</span>
-  <span>Lambda · DynamoDB · API Gateway · Terraform</span>
-</footer>
+      <div class="panel-heading"><span>ℹ</span>About the Project</div>
+
+      <section class="hero" style="padding:0;border-bottom:none;margin-bottom:0;">
+        <p class="label">At a glance</p>
+        <div class="stat-bar">
+          <div class="stat"><div class="stat-val">~50ms</div><div class="stat-name">Avg redirect</div></div>
+          <div class="stat"><div class="stat-val">99.9%</div><div class="stat-name">Uptime</div></div>
+          <div class="stat"><div class="stat-val">$0</div><div class="stat-name">Cost at idle</div></div>
+          <div class="stat"><div class="stat-val">∞</div><div class="stat-name">Links</div></div>
+        </div>
+      </section>
+
+      <section class="features">
+        <p class="label">How it works</p>
+        <div class="box">
+          <div class="example-row">
+            <span class="example-long">https://some-very-long-url.com/with/a/long/path?and=query&amp;params=too</span>
+            <span class="example-arrow">↓ shorten</span>
+            <span class="example-short">links.hemantkumar.dev/x7k2p</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="features">
+        <p class="label">Tech stack</p>
+        <div class="box">
+          <div class="feature-row">
+            <span class="feature-name">Compute</span>
+            <span class="feature-desc">Serverless Lambda — scales to zero, no cold start overhead.</span>
+          </div>
+          <div class="feature-row">
+            <span class="feature-name">Storage</span>
+            <span class="feature-desc">DynamoDB — sub-millisecond URL lookups at any scale.</span>
+          </div>
+          <div class="feature-row">
+            <span class="feature-name">Delivery</span>
+            <span class="feature-desc">CloudFront CDN — global edge, HTTPS enforced.</span>
+          </div>
+        </div>
+      </section>
+
+
+    </div>
+
+  </div><!-- /.split -->
+
+  <footer>
+    <span>© 2026 Hemant Kumar</span>
+    <span>AWS Serverless · Lambda · DynamoDB · API Gateway · Terraform</span>
+  </footer>
+
+</div><!-- /.page-wrap -->
 
 <script>
   document.getElementById('theme-toggle').addEventListener('click', function () {
@@ -389,8 +428,6 @@
 
 <script>
   // ── Minimal Cognito auth ──────────────────────────────────────────────────
-  // Silently handles login/callback. No visible UI change for guests.
-  // Logged-in users have their token sent with shortening requests.
 
   (function () {
     var clientId  = document.querySelector('meta[name="cognito-client-id"]').content;
@@ -398,12 +435,9 @@
     var uiBase    = document.querySelector('meta[name="ui-base-url"]').content;
     var redirectUri = uiBase + '/callback';
 
-    // ── Handle Cognito callback ─────────────────────────────────────────────
-    // Cognito redirects to /callback?code=xxx after login
     if (window.location.pathname === '/callback') {
       var code = new URLSearchParams(window.location.search).get('code');
       if (code) {
-        // Exchange auth code for tokens
         fetch('https://' + domain + '/oauth2/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -419,7 +453,6 @@
           if (data.id_token) {
             sessionStorage.setItem('hk_id_token', data.id_token);
           }
-          // Redirect back to home after storing token
           window.location.replace(uiBase);
         })
         .catch(function () {
@@ -428,11 +461,9 @@
       } else {
         window.location.replace(uiBase);
       }
-      return; // Stop page rendering during callback
+      return;
     }
 
-    // ── Token refresh check ─────────────────────────────────────────────────
-    // If token is expired, clear it — user becomes guest until next login
     var token = sessionStorage.getItem('hk_id_token');
     if (token) {
       try {
