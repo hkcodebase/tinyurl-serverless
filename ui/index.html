@@ -166,6 +166,21 @@
     }
     .copy-btn:hover { opacity: 0.88; }
 
+    .share-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 14px;
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      cursor: pointer;
+      transition: opacity 0.12s;
+      white-space: nowrap;
+    }
+    .share-btn:hover { opacity: 0.75; }
+    .action-cell { display: flex; gap: 6px; }
+
 
     /* ── panel heading bar ── */
     .panel-heading {
@@ -396,7 +411,7 @@
         newRow.innerHTML = `
           <td class="original-url" title="${url}">${url}</td>
           <td><a href="${fullTinyURL}" target="_blank">${fullTinyURL}</a></td>
-          <td><button class="copy-btn" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy</button></td>
+          <td class="action-cell"><button class="copy-btn" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy</button>${navigator.share ? `<button class="share-btn" onclick="shareURL('${fullTinyURL}')">Share</button>` : ''}</td>
         `;
         responseTable.prepend(newRow);
         resultsSection.style.display = 'block';
@@ -411,6 +426,10 @@
     }
 
     loadingIcon.style.display = 'none';
+  }
+
+  function shareURL(url) {
+    navigator.share({ url }).catch(() => {});
   }
 
   function copyToClipboard(button, text) {
