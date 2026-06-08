@@ -385,7 +385,9 @@ resource "aws_api_gateway_deployment" "deployment" {
       aws_api_gateway_integration_response.options_hash_200.id,
 
       aws_api_gateway_method.get_admin_stats.id,
-      aws_api_gateway_integration.get_admin_stats.id
+      aws_api_gateway_integration.get_admin_stats.id,
+
+      var.allowed_origin
     ]))
   }
 
