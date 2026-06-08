@@ -458,10 +458,7 @@
     var redirectUri = uiBase + '/callback';
 
     if (window.location.pathname === '/callback') {
-      var params = new URLSearchParams(window.location.search);
-      var code  = params.get('code');
-      var state = params.get('state');
-      var dest  = (state === 'admin') ? uiBase + '/admin' : uiBase;
+      var code = new URLSearchParams(window.location.search).get('code');
       if (code) {
         fetch('https://' + domain + '/oauth2/token', {
           method: 'POST',
@@ -478,13 +475,13 @@
           if (data.id_token) {
             sessionStorage.setItem('hk_id_token', data.id_token);
           }
-          window.location.replace(dest);
+          window.location.replace(uiBase);
         })
         .catch(function () {
-          window.location.replace(dest);
+          window.location.replace(uiBase);
         });
       } else {
-        window.location.replace(dest);
+        window.location.replace(uiBase);
       }
       return;
     }
@@ -495,45 +492,11 @@
         var payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.exp < Math.floor(Date.now() / 1000)) {
           sessionStorage.removeItem('hk_id_token');
-          token = null;
         }
       } catch (e) {
         sessionStorage.removeItem('hk_id_token');
-        token = null;
       }
     }
-
-    // ── Nav auth controls ───────────────────────────────────────────────────
-    var apiBase = document.querySelector('meta[name="api-base-url"]').content;
-    var navRight = document.querySelector('.nav-right');
-    var authEl = document.createElement('span');
-    authEl.style.cssText = 'font-size:12px;font-weight:600;display:flex;align-items:center;gap:12px;';
-
-    function buildLoginUrl(stateVal) {
-      return 'https://' + domain + '/login'
-        + '?client_id=' + clientId
-        + '&response_type=code'
-        + '&scope=email+openid+profile'
-        + '&redirect_uri=' + encodeURIComponent(redirectUri)
-        + '&state=' + stateVal;
-    }
-
-    if (token) {
-      var email = 'User';
-      try { email = JSON.parse(atob(token.split('.')[1])).email || email; } catch (e) {}
-      authEl.innerHTML =
-        '<span style="color:var(--muted);">' + email + '</span>'
-        + '<a href="#" id="signout-link" style="color:var(--accent);">Sign out</a>';
-      authEl.querySelector('#signout-link').addEventListener('click', function (e) {
-        e.preventDefault();
-        sessionStorage.removeItem('hk_id_token');
-        window.location.reload();
-      });
-    } else {
-      authEl.innerHTML = '<a href="' + buildLoginUrl('home') + '" style="color:var(--accent);">Sign in</a>';
-    }
-
-    navRight.insertBefore(authEl, navRight.querySelector('#theme-toggle'));
   })();
 </script>
 
