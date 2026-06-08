@@ -35,29 +35,21 @@
     }
 
     .split {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      flex: 1;
-      min-height: 0;
-    }
-
-    /* left panel */
-    .panel-left {
-      border-right: 1px solid var(--border);
-      padding: 20px 32px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      overflow-y: auto;
+      width: 100%;
     }
 
-    /* right panel */
+    .panel-left,
     .panel-right {
       padding: 20px 32px;
       display: flex;
       flex-direction: column;
       gap: 14px;
-      overflow-y: auto;
+    }
+
+    .panel-left {
+      border-bottom: 1px solid var(--border);
     }
 
     /* ── shortener input ── */
@@ -123,7 +115,10 @@
     html.dark .alert-error { color: #f87171; border-color: #991b1b; }
 
     /* ── results table ── */
-    .results-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .results-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+    .results-table col.col-orig  { width: 30%; }
+    .results-table col.col-short { width: 44%; }
+    .results-table col.col-action{ width: 26%; }
     .results-table th {
       text-align: left;
       font-size: 11px;
@@ -131,22 +126,24 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--accent);
-      padding: 12px 16px;
+      padding: 9px 12px;
       border-bottom: 1px solid var(--border);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .results-table td {
-      padding: 12px 16px;
+      padding: 9px 12px;
       border-bottom: 1px solid var(--border);
       color: var(--text);
       font-weight: 500;
       vertical-align: middle;
-    }
-    .results-table tr:last-child td { border-bottom: none; }
-    .results-table .original-url {
-      max-width: 200px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+    .results-table tr:last-child td { border-bottom: none; }
+    .results-table .original-url {
       color: var(--muted);
       font-size: 12px;
     }
@@ -201,6 +198,7 @@
     body { line-height: 1.5; }
     .label { margin-bottom: 6px; padding: 3px 10px; font-size: 10px; }
     .shortener, .features, .results, .connect, .hero { margin-bottom: 0; }
+    .stat-bar { flex-wrap: nowrap; }
     .stat { padding: 8px 12px; }
     .stat-val { font-size: 16px; }
     .stat-name { font-size: 9px; }
@@ -282,6 +280,11 @@
         <p class="label">Results</p>
         <div class="box">
           <table class="results-table" id="responseTable">
+            <colgroup>
+              <col class="col-orig">
+              <col class="col-short">
+              <col class="col-action">
+            </colgroup>
             <thead>
               <tr>
                 <th>Original</th>
