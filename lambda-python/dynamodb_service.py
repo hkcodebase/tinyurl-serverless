@@ -112,13 +112,14 @@ def get_stats() -> dict:
     top_links = sorted(
         [
             {
-                "hash":           i["hash"],
-                "original_url":   i["original_url"],
+                "hash":           i.get("hash", ""),
+                "original_url":   i.get("original_url", ""),
                 "redirect_count": int(i.get("redirect_count", 0)),
                 "created_at":     i.get("created_at", ""),
                 "created_by":     i.get("created_by", "guest"),
             }
             for i in items
+            if i.get("hash") and i.get("original_url")
         ],
         key=lambda x: x["redirect_count"],
         reverse=True,

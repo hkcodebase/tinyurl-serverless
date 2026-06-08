@@ -3,6 +3,14 @@ import os
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
+from decimal import Decimal
+
+
+class _DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return int(obj) if obj % 1 == 0 else float(obj)
+        return super().default(obj)
 
 from dynamodb_service import (
     save_url,
@@ -108,7 +116,7 @@ def _ok(body: dict, status: int = 200) -> dict:
     return {
         "statusCode": status,
         "headers": CORS_HEADERS,
-        "body": json.dumps(body),
+        "body": json.dumps(body, cls=_DecimalEncoder),
     }
 
 
@@ -169,8 +177,11 @@ def _handle_get_admin_stats(groups: list[str]) -> dict:
     if not _is_admin(groups):
         return _err("Forbidden — admin access required", status=403)
 
-    stats = get_stats()
-    return _ok(stats)
+    try:
+        stats = get_stats()
+        return _ok(stats)
+    except Exception as e:
+        return _err(f"Internal error: {str(e)}", status=500)
 
 
 def _handle_options() -> dict:
