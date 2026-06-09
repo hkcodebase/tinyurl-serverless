@@ -75,6 +75,19 @@ API Gateway (api.links.hemantkumar.dev)
 
 ---
 
+## URL Expiry
+
+Every short link gets an `expires_at` field (ISO 8601 UTC) written to DynamoDB at creation time.
+
+| User type | Expires after |
+|---|---|
+| Guest (no login) | 30 days |
+| Authenticated user | 90 days |
+
+Expired links are not automatically deleted — `expires_at` is informational and can be used by a future cleanup job to purge stale records.
+
+---
+
 ## Prerequisites
 
 - AWS account with credentials configured (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` or an AWS profile)

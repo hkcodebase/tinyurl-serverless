@@ -4,6 +4,7 @@ import random
 import boto3
 from boto3.dynamodb.conditions import Attr
 from decimal import Decimal
+from datetime import datetime, timezone, timedelta
 
 # ── DynamoDB setup ─────────────────────────────────────────────────────────────
 _ENDPOINT = os.environ.get("DYNAMODB_ENDPOINT")  # set for local dev only
@@ -16,6 +17,18 @@ _dynamodb = boto3.resource(
     **({"endpoint_url": _ENDPOINT} if _ENDPOINT else {}),
 )
 _table = _dynamodb.Table(_TABLE)
+
+# ── Expiry policy ───────────────────────────────────────────────────────────────
+# Guest URLs expire after 30 days; authenticated user URLs after 90 days.
+_EXPIRY_GUEST_DAYS = 30
+_EXPIRY_USER_DAYS  = 90
+
+
+def _compute_expires_at(created_by: str) -> str:
+    """Return an ISO 8601 UTC timestamp for when this URL expires."""
+    days = _EXPIRY_GUEST_DAYS if created_by == "guest" else _EXPIRY_USER_DAYS
+    return (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
+
 
 # ── Hash generation ────────────────────────────────────────────────────────────
 _ALPHABET  = string.ascii_letters + string.digits  # a-z A-Z 0-9
@@ -50,6 +63,7 @@ def save_url(original_url: str, created_at: str, created_by: str) -> str:
                     "created_at":     created_at,
                     "created_by":     created_by,
                     "redirect_count": 0,
+                    "expires_at":     _compute_expires_at(created_by),
                 },
                 # Only write if hash doesn't already exist
                 ConditionExpression=Attr("hash").not_exists(),

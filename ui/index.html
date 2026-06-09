@@ -38,6 +38,7 @@
       display: flex;
       flex-direction: column;
       width: 100%;
+      flex: 1;
     }
 
     .panel-left,
@@ -48,8 +49,19 @@
       gap: 14px;
     }
 
-    .panel-left {
+    .panel-left.has-sidebar {
       border-bottom: 1px solid var(--border);
+    }
+
+    /* Guest view: center the shortener vertically for a clean minimal look */
+    .split.guest-view {
+      flex: 1;
+      justify-content: center;
+    }
+    .split.guest-view .panel-left {
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
     }
 
     /* ── shortener input ── */
@@ -300,8 +312,8 @@
 
     </div>
 
-    <!-- ── RIGHT: Stats + How it works ── -->
-    <div class="panel-right">
+    <!-- ── RIGHT: About — shown only when logged in ── -->
+    <div class="panel-right" id="panel-right" style="display:none;">
 
       <div class="panel-heading"><span>ℹ</span>About the Project</div>
 
@@ -504,13 +516,29 @@
       }
     }
 
+    // ── Layout: show/hide right panel based on login state ──────────────────
+    var splitEl      = document.querySelector('.split');
+    var panelLeft    = document.querySelector('.panel-left');
+    var panelRight   = document.getElementById('panel-right');
+    if (token) {
+      panelRight.style.display = '';
+      panelLeft.classList.add('has-sidebar');
+    } else {
+      splitEl.classList.add('guest-view');
+    }
+
     // ── Nav: Sign In / Sign Out ──────────────────────────────────────────────
     var navAuth = document.getElementById('nav-auth');
     if (token) {
       var email = '';
       try { email = JSON.parse(atob(token.split('.')[1])).email || ''; } catch (e) {}
+      // Show only the local part (before @) to keep the nav compact
+      var displayName = email ? email.split('@')[0] : 'account';
       navAuth.innerHTML =
-        (email ? '<span class="nav-link" style="color:var(--muted);cursor:default;">' + email + '</span>' : '')
+        '<span style="font-size:12px;font-weight:600;color:var(--muted);">'
+        + displayName
+        + '</span>'
+        + '<span style="color:var(--border);margin:0 2px;">·</span>'
         + '<a href="#" id="signout-btn" class="nav-link">Sign out</a>';
       document.getElementById('signout-btn').addEventListener('click', function (e) {
         e.preventDefault();

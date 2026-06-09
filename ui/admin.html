@@ -412,10 +412,12 @@
       return;
     }
 
-    // Logged in — show email + sign out in nav, load stats
+    // Logged in — show name + sign out in nav, load stats
     const email = getEmailFromToken(token);
+    const displayName = email.includes('@') ? email.split('@')[0] : email;
     navAuth.innerHTML =
-      `<span class="nav-link" style="color:var(--muted);cursor:default;">${email}</span>`
+      `<span style="font-size:12px;font-weight:600;color:var(--muted);">${displayName}</span>`
+      + `<span style="color:var(--border);margin:0 2px;">·</span>`
       + `<a href="#" id="signout-btn" class="nav-link">Sign out</a>`;
     document.getElementById('signout-btn').addEventListener('click', function (e) {
       e.preventDefault();
