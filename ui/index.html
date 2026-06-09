@@ -25,8 +25,7 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    /* ── full-screen two-column layout ── */
-    body { max-width: none; padding: 0; }
+    body { max-width: none; padding: 0; line-height: 1.5; }
 
     .page-wrap {
       display: flex;
@@ -34,6 +33,7 @@
       min-height: 100vh;
     }
 
+    /* ── split layout ── */
     .split {
       display: flex;
       flex-direction: column;
@@ -43,43 +43,75 @@
 
     .panel-left,
     .panel-right {
-      padding: 20px 32px;
+      padding: 32px 40px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 20px;
     }
 
     .panel-left.has-sidebar {
       border-bottom: 1px solid var(--border);
     }
 
-    /* Guest view: center the shortener vertically for a clean minimal look */
+    /* Guest: center the shortener for a clean minimal look */
     .split.guest-view {
       flex: 1;
       justify-content: center;
     }
     .split.guest-view .panel-left {
-      max-width: 680px;
+      max-width: 720px;
       width: 100%;
       margin: 0 auto;
     }
+
+    /* ── hero heading ── */
+    .hero-heading { margin-bottom: 8px; }
+    .hero-heading h1 {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin: 0 0 8px;
+    }
+    .hero-sub {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.6;
+      max-width: 560px;
+    }
+
+    /* ── panel section label ── */
+    .panel-section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .panel-section-label span { color: var(--accent); margin-right: 8px; }
 
     /* ── shortener input ── */
     .input-row { display: flex; }
     .url-input {
       flex: 1;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
-      padding: 14px 16px;
+      padding: 16px 18px;
       background: var(--bg);
       color: var(--text);
       border: none;
       border-right: 1px solid var(--border);
       outline: none;
       resize: none;
-      height: 52px;
+      height: 56px;
       line-height: 1.5;
+      min-width: 0;
     }
     .url-input::placeholder { color: var(--muted); font-weight: 400; }
     .url-input.error { background: rgba(249, 115, 22, 0.06); }
@@ -90,9 +122,9 @@
       font-weight: 700;
       letter-spacing: 0.06em;
       text-transform: uppercase;
-      padding: 14px 24px;
+      padding: 16px 24px;
       background: #16a34a;
-      color: #ffffff;
+      color: #fff;
       border: none;
       cursor: pointer;
       white-space: nowrap;
@@ -108,7 +140,7 @@
       display: none;
       width: 12px;
       height: 12px;
-      border: 2px solid #ffffff;
+      border: 2px solid #fff;
       border-top-color: transparent;
       border-radius: 50%;
       animation: spin 0.6s linear infinite;
@@ -126,11 +158,16 @@
     .alert-error   { display: block; color: #dc2626; border-color: #ef4444; }
     html.dark .alert-error { color: #f87171; border-color: #991b1b; }
 
-    /* ── results table ── */
-    .results-table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
-    .results-table col.col-orig  { width: 30%; }
-    .results-table col.col-short { width: 44%; }
-    .results-table col.col-action{ width: 26%; }
+    /* ── results / my-links table ── */
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      table-layout: fixed;
+    }
+    .results-table col.col-orig   { width: 35%; }
+    .results-table col.col-short  { width: 35%; }
+    .results-table col.col-action { width: 30%; }
     .results-table th {
       text-align: left;
       font-size: 11px;
@@ -138,14 +175,14 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--accent);
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
     .results-table td {
-      padding: 9px 12px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
       color: var(--text);
       font-weight: 500;
@@ -155,59 +192,44 @@
       white-space: nowrap;
     }
     .results-table tr:last-child td { border-bottom: none; }
-    .results-table .original-url {
-      color: var(--muted);
-      font-size: 12px;
-    }
+    .results-table .original-url { color: var(--muted); font-size: 12px; }
     .results-table a { color: var(--accent); font-weight: 600; }
 
-    .copy-btn {
+    .copy-btn, .share-btn {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 700;
-      padding: 4px 14px;
-      background: #16a34a;
-      color: #ffffff;
-      border: none;
+      padding: 5px 14px;
       cursor: pointer;
-      transition: opacity 0.12s;
       white-space: nowrap;
+      transition: opacity 0.12s;
     }
+    .copy-btn  { background: #16a34a; color: #fff; border: none; }
     .copy-btn:hover { opacity: 0.88; }
-
-    .share-btn {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 4px 14px;
-      background: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      cursor: pointer;
-      transition: opacity 0.12s;
-      white-space: nowrap;
-    }
+    .share-btn { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
     .share-btn:hover { opacity: 0.75; }
-    .action-cell { display: flex; gap: 6px; }
+    .action-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 
-
-    /* ── panel heading bar ── */
-    .panel-heading {
+    /* ── about toggle button ── */
+    .about-toggle {
+      font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--muted);
-      padding-bottom: 12px;
+      padding-bottom: 10px;
+      border: none;
       border-bottom: 1px solid var(--border);
+      background: none;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
     }
-    .panel-heading span {
-      color: var(--accent);
-      margin-right: 8px;
-    }
+    .about-toggle:hover { color: var(--text); }
+    .about-toggle span { color: var(--accent); margin-right: 8px; }
 
-    /* ── override global spacing for compact layout ── */
-    body { line-height: 1.5; }
+    /* ── overrides for compact global styles ── */
     .label { margin-bottom: 6px; padding: 3px 10px; font-size: 10px; }
     .shortener, .features, .results, .connect, .hero { margin-bottom: 0; }
     .stat-bar { flex-wrap: nowrap; }
@@ -219,32 +241,20 @@
     .example-row { padding: 10px 12px; }
     .example-long { font-size: 11px; }
     .example-short { font-size: 13px; }
-    .results-table th, .results-table td { padding: 9px 12px; }
-    .panel-heading { padding-bottom: 10px; font-size: 10px; }
 
-    /* ── footer full-width ── */
-    footer { padding: 12px 32px 0; font-size: 11px; }
-
-    /* ── responsive: stack below 860px ── */
-    @media (max-width: 860px) {
-      .split { grid-template-columns: 1fr; }
-      .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
-      .panel-left, .panel-right { padding: 28px 20px; }
-      footer { padding: 20px 20px 0; }
-    }
+    /* ── footer ── */
+    footer { padding: 16px 40px 0; font-size: 11px; }
 
     /* ── about dialog ── */
     dialog {
       background: var(--bg);
       color: var(--text);
       border: 1px solid var(--border);
-      padding: 24px;
-      width: min(520px, 92vw);
+      padding: 28px;
+      width: min(540px, 94vw);
       font-family: 'JetBrains Mono', monospace;
     }
-    dialog::backdrop {
-      background: rgba(0, 0, 0, 0.45);
-    }
+    dialog::backdrop { background: rgba(0,0,0,0.45); }
     .dialog-header {
       display: flex;
       justify-content: space-between;
@@ -262,12 +272,23 @@
     }
     .dialog-close:hover { color: var(--text); }
 
-    @media (max-width: 560px) {
-      .nav { padding: 0 20px 0 0; }
-      .nav-right { gap: 16px; }
+    /* ── mobile ── */
+    @media (max-width: 600px) {
+      .panel-left, .panel-right { padding: 24px 20px; gap: 16px; }
+      footer { padding: 16px 20px 0; }
+      .hero-heading h1 { font-size: 28px; }
+      .hero-sub { font-size: 13px; }
+      .url-input { font-size: 14px; padding: 14px 12px; height: 52px; }
+      .shorten-btn { padding: 14px 16px; font-size: 12px; }
+      /* on mobile hide original URL col, keep short + actions */
+      .results-table col.col-orig { width: 0; }
+      .results-table col.col-short { width: 55%; }
+      .results-table col.col-action { width: 45%; }
+      .results-table .original-url { display: none; }
+      .results-table th:first-child { display: none; }
       .stat-bar { flex-wrap: wrap; }
       .stat { flex: 1 1 45%; }
-      .feature-row { grid-template-columns: 1fr; gap: 4px; }
+      .nav-right { gap: 12px; }
     }
   </style>
 </head>
@@ -278,14 +299,9 @@
   <nav class="nav">
     <div class="nav-logo-wrap">
       <div class="nav-logo-bar"></div>
-      <div>
-        <a href="/" class="nav-logo">links.hemantkumar.dev</a>
-        <div style="font-size:11px;font-weight:500;color:var(--muted);margin-top:-4px;">URL Shortener</div>
-      </div>
+      <a href="/" class="nav-logo" style="font-size:12px;letter-spacing:0.04em;">links.hemantkumar.dev</a>
     </div>
     <div class="nav-right">
-      <a href="https://hemantkumar.dev" target="_blank" class="nav-link">Hemant Kumar</a>
-      <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="nav-link">GitHub</a>
       <span id="nav-auth"></span>
       <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
     </div>
@@ -296,10 +312,13 @@
     <!-- ── LEFT: Shorten + Results ── -->
     <div class="panel-left">
 
-      <div class="panel-heading"><span>→</span>URL Shortener</div>
+      <!-- Hero heading -->
+      <div class="hero-heading">
+        <h1>URL Shortener</h1>
+        <p class="hero-sub">Paste a long URL and get a clean short link instantly. Sign in to track redirects and manage your links.</p>
+      </div>
 
       <section class="shortener">
-        <p class="label">Shorten a URL</p>
         <div class="box">
           <div class="alert-box" id="alertBox"></div>
           <div class="input-row">
@@ -346,7 +365,7 @@
 
       <!-- My Links — loaded after login -->
       <div id="my-links-section">
-        <div class="panel-heading"><span>↗</span>My Links</div>
+        <div class="panel-section-label"><span>↗</span>My Links</div>
         <section class="results">
           <div class="box">
             <table class="results-table" id="myLinksTable">
@@ -372,8 +391,8 @@
         </section>
       </div>
 
-      <button class="panel-heading about-toggle" onclick="document.getElementById('about-dialog').showModal()" style="margin-top:8px;width:100%;text-align:left;background:none;border:none;cursor:pointer;">
-        <span>ℹ</span>About the Project <span style="float:right;font-size:10px;color:var(--muted);">↗ details</span>
+      <button class="panel-heading about-toggle" onclick="document.getElementById('about-dialog').showModal()">
+        <span>ℹ</span>About the Project
       </button>
 
 
