@@ -233,6 +233,35 @@
       footer { padding: 20px 20px 0; }
     }
 
+    /* ── about dialog ── */
+    dialog {
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 24px;
+      width: min(520px, 92vw);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.45);
+    }
+    .dialog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .dialog-close {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 2px 8px;
+    }
+    .dialog-close:hover { color: var(--text); }
+
     @media (max-width: 560px) {
       .nav { padding: 0 20px 0 0; }
       .nav-right { gap: 16px; }
@@ -343,46 +372,9 @@
         </section>
       </div>
 
-      <div class="panel-heading" style="margin-top:8px;"><span>ℹ</span>About the Project</div>
-
-      <section class="hero" style="padding:0;border-bottom:none;margin-bottom:0;">
-        <p class="label">At a glance</p>
-        <div class="stat-bar">
-          <div class="stat"><div class="stat-val">~50ms</div><div class="stat-name">Avg redirect</div></div>
-          <div class="stat"><div class="stat-val">99.9%</div><div class="stat-name">Uptime</div></div>
-          <div class="stat"><div class="stat-val">$0</div><div class="stat-name">Cost at idle</div></div>
-          <div class="stat"><div class="stat-val">∞</div><div class="stat-name">Links</div></div>
-        </div>
-      </section>
-
-      <section class="features">
-        <p class="label">How it works</p>
-        <div class="box">
-          <div class="example-row">
-            <span class="example-long">https://some-very-long-url.com/with/a/long/path?and=query&amp;params=too</span>
-            <span class="example-arrow">↓ shorten</span>
-            <span class="example-short">links.hemantkumar.dev/x7k2p</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="features">
-        <p class="label">Tech stack</p>
-        <div class="box">
-          <div class="feature-row">
-            <span class="feature-name">Compute</span>
-            <span class="feature-desc">Serverless Lambda — scales to zero, no cold start overhead.</span>
-          </div>
-          <div class="feature-row">
-            <span class="feature-name">Storage</span>
-            <span class="feature-desc">DynamoDB — sub-millisecond URL lookups at any scale.</span>
-          </div>
-          <div class="feature-row">
-            <span class="feature-name">Delivery</span>
-            <span class="feature-desc">CloudFront CDN — global edge, HTTPS enforced.</span>
-          </div>
-        </div>
-      </section>
+      <button class="panel-heading about-toggle" onclick="document.getElementById('about-dialog').showModal()" style="margin-top:8px;width:100%;text-align:left;background:none;border:none;cursor:pointer;">
+        <span>ℹ</span>About the Project <span style="float:right;font-size:10px;color:var(--muted);">↗ details</span>
+      </button>
 
 
     </div>
@@ -396,7 +388,43 @@
 
 </div><!-- /.page-wrap -->
 
+<!-- About dialog -->
+<dialog id="about-dialog">
+  <div class="dialog-header">
+    <span style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);">ℹ About the Project</span>
+    <button onclick="document.getElementById('about-dialog').close()" class="dialog-close">✕</button>
+  </div>
+
+  <p class="label">At a glance</p>
+  <div class="stat-bar" style="margin-bottom:20px;">
+    <div class="stat"><div class="stat-val">~50ms</div><div class="stat-name">Avg redirect</div></div>
+    <div class="stat"><div class="stat-val">99.9%</div><div class="stat-name">Uptime</div></div>
+    <div class="stat"><div class="stat-val">$0</div><div class="stat-name">Cost at idle</div></div>
+    <div class="stat"><div class="stat-val">∞</div><div class="stat-name">Links</div></div>
+  </div>
+
+  <p class="label">How it works</p>
+  <div class="box" style="margin-bottom:20px;">
+    <div class="example-row">
+      <span class="example-long">https://some-very-long-url.com/with/a/long/path?and=query&amp;params=too</span>
+      <span class="example-arrow">↓ shorten</span>
+      <span class="example-short">links.hemantkumar.dev/x7k2p</span>
+    </div>
+  </div>
+
+  <p class="label">Tech stack</p>
+  <div class="box">
+    <div class="feature-row"><span class="feature-name">Compute</span><span class="feature-desc">Serverless Lambda — scales to zero, no cold start overhead.</span></div>
+    <div class="feature-row"><span class="feature-name">Storage</span><span class="feature-desc">DynamoDB — sub-millisecond URL lookups at any scale.</span></div>
+    <div class="feature-row"><span class="feature-name">Delivery</span><span class="feature-desc">CloudFront CDN — global edge, HTTPS enforced.</span></div>
+  </div>
+</dialog>
+
 <script>
+  document.getElementById('about-dialog').addEventListener('click', function (e) {
+    if (e.target === this) this.close();
+  });
+
   document.getElementById('theme-toggle').addEventListener('click', function () {
     var isDark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('hk-theme', isDark ? 'dark' : 'light');
