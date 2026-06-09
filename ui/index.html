@@ -210,6 +210,37 @@
     .share-btn:hover { opacity: 0.75; }
     .action-cell { display: flex; gap: 6px; flex-wrap: wrap; }
 
+    /* ── nav center + separators ── */
+    .nav-sep {
+      color: var(--border);
+      font-size: 18px;
+      font-weight: 300;
+      user-select: none;
+    }
+    .nav-center {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+    .nav-about-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0;
+      transition: color 0.15s;
+    }
+    .nav-about-btn:hover { color: var(--accent); }
+
+    /* ── panel-right: don't stretch, sit tight to content ── */
+    .panel-right {
+      padding-bottom: 0;
+      justify-content: flex-start;
+    }
+
     /* ── about toggle button ── */
     .about-toggle {
       font-family: 'JetBrains Mono', monospace;
@@ -289,6 +320,8 @@
       .stat-bar { flex-wrap: wrap; }
       .stat { flex: 1 1 45%; }
       .nav-right { gap: 12px; }
+      .nav-sep { display: none; }
+      .nav-center { flex: none; }
     }
   </style>
 </head>
@@ -301,6 +334,11 @@
       <div class="nav-logo-bar"></div>
       <a href="/" class="nav-logo" style="font-size:12px;letter-spacing:0.04em;">links.hemantkumar.dev</a>
     </div>
+    <span class="nav-sep">|</span>
+    <div class="nav-center">
+      <button onclick="document.getElementById('about-dialog').showModal()" class="nav-about-btn">ℹ About</button>
+    </div>
+    <span class="nav-sep">|</span>
     <div class="nav-right">
       <span id="nav-auth"></span>
       <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
@@ -399,7 +437,7 @@
 
   <footer>
     <span>© 2026 Hemant Kumar</span>
-    <button onclick="document.getElementById('about-dialog').showModal()" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;background:none;border:none;color:var(--muted);cursor:pointer;padding:0;">ℹ About</button>
+    <span>links.hemantkumar.dev</span>
   </footer>
 
 </div><!-- /.page-wrap -->
