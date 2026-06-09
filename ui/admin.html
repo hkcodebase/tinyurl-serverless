@@ -296,7 +296,12 @@
   }
 
   function redirectToLogin() {
-    const loginUrl = `https://${domain}/login?client_id=${clientId}&response_type=code&scope=email+openid+profile&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const loginUrl = `https://${domain}/login`
+      + `?client_id=${clientId}`
+      + `&response_type=code`
+      + `&scope=email+openid+profile`
+      + `&redirect_uri=${encodeURIComponent(uiBase + '/callback')}`
+      + `&state=admin`;
     window.location.href = loginUrl;
   }
 
@@ -341,7 +346,7 @@
             <td style="color:var(--muted);font-size:12px;">${i + 1}</td>
             <td><a href="${uiBase}/${link.hash}" target="_blank">${link.hash}</a></td>
             <td class="url-cell" title="${link.original_url}">${link.original_url}</td>
-            <td class="user-cell">${link.created_by === 'guest' ? 'guest' : link.created_by.substring(0, 8) + '…'}</td>
+            <td class="user-cell">${link.created_by === 'guest' ? 'guest' : link.created_by}</td>
             <td style="font-size:12px;color:var(--muted);">${link.created_at ? link.created_at.substring(0, 10) : '—'}</td>
             <td class="count">${link.redirect_count}</td>
           </tr>
@@ -358,7 +363,7 @@
       } else {
         byUserBody.innerHTML = users.map(([user, count]) => `
           <tr>
-            <td>${user === 'guest' ? 'Guest' : user.substring(0, 8) + '…'}</td>
+            <td>${user === 'guest' ? 'Guest' : user}</td>
             <td class="count">${count}</td>
           </tr>
         `).join('');

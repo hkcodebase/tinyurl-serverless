@@ -245,6 +245,7 @@
     <div class="nav-right">
       <a href="https://hemantkumar.dev" target="_blank" class="nav-link">Hemant Kumar</a>
       <a href="https://github.com/hkcodebase/tinyurl-serverless" target="_blank" class="nav-link">GitHub</a>
+      <span id="nav-auth"></span>
       <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
     </div>
   </nav>
@@ -458,7 +459,10 @@
     var redirectUri = uiBase + '/callback';
 
     if (window.location.pathname === '/callback') {
-      var code = new URLSearchParams(window.location.search).get('code');
+      var params = new URLSearchParams(window.location.search);
+      var code  = params.get('code');
+      var state = params.get('state');
+      var dest  = (state === 'admin') ? uiBase + '/admin' : uiBase;
       if (code) {
         fetch('https://' + domain + '/oauth2/token', {
           method: 'POST',
@@ -475,13 +479,13 @@
           if (data.id_token) {
             sessionStorage.setItem('hk_id_token', data.id_token);
           }
-          window.location.replace(uiBase);
+          window.location.replace(dest);
         })
         .catch(function () {
-          window.location.replace(uiBase);
+          window.location.replace(dest);
         });
       } else {
-        window.location.replace(uiBase);
+        window.location.replace(dest);
       }
       return;
     }
@@ -492,10 +496,34 @@
         var payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.exp < Math.floor(Date.now() / 1000)) {
           sessionStorage.removeItem('hk_id_token');
+          token = null;
         }
       } catch (e) {
         sessionStorage.removeItem('hk_id_token');
+        token = null;
       }
+    }
+
+    // ── Nav: Sign In / Sign Out ──────────────────────────────────────────────
+    var navAuth = document.getElementById('nav-auth');
+    if (token) {
+      var email = '';
+      try { email = JSON.parse(atob(token.split('.')[1])).email || ''; } catch (e) {}
+      navAuth.innerHTML =
+        (email ? '<span class="nav-link" style="color:var(--muted);cursor:default;">' + email + '</span>' : '')
+        + '<a href="#" id="signout-btn" class="nav-link">Sign out</a>';
+      document.getElementById('signout-btn').addEventListener('click', function (e) {
+        e.preventDefault();
+        sessionStorage.removeItem('hk_id_token');
+        window.location.reload();
+      });
+    } else {
+      var loginUrl = 'https://' + domain + '/login'
+        + '?client_id=' + clientId
+        + '&response_type=code'
+        + '&scope=email+openid+profile'
+        + '&redirect_uri=' + encodeURIComponent(redirectUri);
+      navAuth.innerHTML = '<a href="' + loginUrl + '" class="nav-link">Sign in</a>';
     }
   })();
 </script>

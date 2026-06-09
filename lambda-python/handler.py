@@ -99,7 +99,7 @@ def _extract_user(event: dict) -> tuple[str, list[str]]:
     token = auth_header.removeprefix("Bearer ").strip()
     try:
         payload = _verify_cognito_token(token)
-        user_id = payload.get("sub", "guest")
+        user_id = payload.get("email") or payload.get("sub", "guest")
         groups  = payload.get("cognito:groups", [])
         return user_id, groups
     except Exception:

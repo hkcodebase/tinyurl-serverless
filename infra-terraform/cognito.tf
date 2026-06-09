@@ -44,14 +44,9 @@ resource "aws_cognito_user_pool" "tinyurl" {
     }
   }
 
-  # Self sign-up disabled — invite only via admin
+  # Self sign-up enabled — anyone can register with their email
   admin_create_user_config {
-    allow_admin_create_user_only = true
-    invite_message_template {
-      email_subject = "Your links.hemantkumar.dev invite"
-      email_message = "You have been invited to links.hemantkumar.dev. Your username is {username} and temporary password is {####}"
-      sms_message   = "Your username is {username} and temporary password is {####}"
-    }
+    allow_admin_create_user_only = false
   }
 
   tags = {
