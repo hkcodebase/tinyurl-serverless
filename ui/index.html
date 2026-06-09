@@ -365,7 +365,7 @@
 
       <!-- My Links — loaded after login -->
       <div id="my-links-section">
-        <div class="panel-section-label"><span>↗</span>My Links</div>
+        <div class="panel-section-label" style="border-bottom:none;margin-bottom:0;padding-bottom:6px;"><span>↗</span>My Links</div>
         <section class="results">
           <div class="box">
             <table class="results-table" id="myLinksTable">
@@ -391,10 +391,7 @@
         </section>
       </div>
 
-      <button class="panel-heading about-toggle" onclick="document.getElementById('about-dialog').showModal()">
-        <span>ℹ</span>About the Project
-      </button>
-
+      <hr style="border:none;border-top:1px solid var(--border);margin:0;">
 
     </div>
 
@@ -402,7 +399,7 @@
 
   <footer>
     <span>© 2026 Hemant Kumar</span>
-    <span>AWS Serverless · Lambda · DynamoDB · API Gateway · Terraform</span>
+    <button onclick="document.getElementById('about-dialog').showModal()" style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;background:none;border:none;color:var(--muted);cursor:pointer;padding:0;">ℹ About</button>
   </footer>
 
 </div><!-- /.page-wrap -->
