@@ -96,6 +96,40 @@ def increment_redirect_count(hash_val: str) -> None:
     )
 
 
+# ── User URLs ──────────────────────────────────────────────────────────────────
+def get_user_urls(user_id: str) -> list:
+    """
+    Return all URLs created by a specific user, sorted newest first.
+    """
+    response = _table.scan(
+        FilterExpression=Attr("created_by").eq(user_id),
+    )
+    items = response.get("Items", [])
+
+    while "LastEvaluatedKey" in response:
+        response = _table.scan(
+            FilterExpression=Attr("created_by").eq(user_id),
+            ExclusiveStartKey=response["LastEvaluatedKey"],
+        )
+        items.extend(response.get("Items", []))
+
+    return sorted(
+        [
+            {
+                "hash":           i.get("hash", ""),
+                "original_url":   i.get("original_url", ""),
+                "redirect_count": int(i.get("redirect_count", 0)),
+                "created_at":     i.get("created_at", ""),
+                "expires_at":     i.get("expires_at", ""),
+            }
+            for i in items
+            if i.get("hash") and i.get("original_url")
+        ],
+        key=lambda x: x["created_at"],
+        reverse=True,
+    )
+
+
 # ── Admin stats ────────────────────────────────────────────────────────────────
 def get_stats() -> dict:
     """

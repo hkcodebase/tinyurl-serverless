@@ -315,7 +315,35 @@
     <!-- ── RIGHT: About — shown only when logged in ── -->
     <div class="panel-right" id="panel-right" style="display:none;">
 
-      <div class="panel-heading"><span>ℹ</span>About the Project</div>
+      <!-- My Links — loaded after login -->
+      <div id="my-links-section">
+        <div class="panel-heading"><span>↗</span>My Links</div>
+        <section class="results">
+          <div class="box">
+            <table class="results-table" id="myLinksTable">
+              <colgroup>
+                <col class="col-orig">
+                <col class="col-short">
+                <col style="width:80px;">
+                <col class="col-action">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Original</th>
+                  <th>Short Link</th>
+                  <th style="text-align:right;">Redirects</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="myLinksBody">
+                <tr><td colspan="4" style="padding:16px;text-align:center;font-size:13px;color:var(--muted);">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <div class="panel-heading" style="margin-top:8px;"><span>ℹ</span>About the Project</div>
 
       <section class="hero" style="padding:0;border-bottom:none;margin-bottom:0;">
         <p class="label">At a glance</p>
@@ -427,7 +455,10 @@
         newRow.innerHTML = `
           <td class="original-url" title="${url}">${url}</td>
           <td><a href="${fullTinyURL}" target="_blank">${fullTinyURL}</a></td>
-          <td class="action-cell"><button class="copy-btn" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy</button>${navigator.share ? `<button class="share-btn" onclick="shareURL('${fullTinyURL}')">Share</button>` : ''}</td>
+          <td class="action-cell">
+            <button class="copy-btn" onclick="copyToClipboard(this, '${fullTinyURL}')">Copy</button>
+            <button class="share-btn" onclick="shareURL('${fullTinyURL}')">Share</button>
+          </td>
         `;
         responseTable.prepend(newRow);
         resultsSection.style.display = 'block';
@@ -445,7 +476,11 @@
   }
 
   function shareURL(url) {
-    navigator.share({ url }).catch(() => {});
+    if (navigator.share) {
+      navigator.share({ url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url).then(() => alert('Link copied to clipboard!'));
+    }
   }
 
   function copyToClipboard(button, text) {
@@ -458,6 +493,36 @@
         button.style.opacity = '';
       }, 2000);
     });
+  }
+
+  async function loadMyLinks(token) {
+    const body = document.getElementById('myLinksBody');
+    try {
+      const res = await fetch('__API_BASE_URL__/user/urls', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      if (!res.ok) throw new Error('Failed to load');
+      const data = await res.json();
+      const urls = data.urls || [];
+      if (urls.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;font-size:13px;color:var(--muted);">No links yet — shorten one above.</td></tr>';
+        return;
+      }
+      body.innerHTML = urls.map(link => {
+        const short = '__UI_BASE_URL__/' + link.hash;
+        return `<tr>
+          <td class="original-url" title="${link.original_url}">${link.original_url}</td>
+          <td><a href="${short}" target="_blank">${link.hash}</a></td>
+          <td style="text-align:right;font-weight:700;color:var(--accent);">${link.redirect_count}</td>
+          <td class="action-cell">
+            <button class="copy-btn" onclick="copyToClipboard(this,'${short}')">Copy</button>
+            <button class="share-btn" onclick="shareURL('${short}')">Share</button>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch (e) {
+      body.innerHTML = '<tr><td colspan="4" style="padding:16px;text-align:center;font-size:13px;color:var(--muted);">Could not load links.</td></tr>';
+    }
   }
 </script>
 
@@ -523,6 +588,7 @@
     if (token) {
       panelRight.style.display = '';
       panelLeft.classList.add('has-sidebar');
+      loadMyLinks(token);
     } else {
       splitEl.classList.add('guest-view');
     }

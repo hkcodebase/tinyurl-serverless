@@ -17,6 +17,7 @@ from dynamodb_service import (
     get_url,
     increment_redirect_count,
     get_stats,
+    get_user_urls,
 )
 
 # ── Cognito config ─────────────────────────────────────────────────────────────
@@ -172,6 +173,17 @@ def _handle_get_hash(hash_value: str) -> dict:
     }
 
 
+def _handle_get_user_urls(user_id: str) -> dict:
+    """GET /user/urls — return all URLs created by the authenticated user."""
+    if user_id == "guest":
+        return _err("Authentication required", status=401)
+    try:
+        urls = get_user_urls(user_id)
+        return _ok({"urls": urls})
+    except Exception as e:
+        return _err(f"Internal error: {str(e)}", status=500)
+
+
 def _handle_get_admin_stats(groups: list[str]) -> dict:
     """GET /admin/stats — admin-only stats endpoint."""
     if not _is_admin(groups):
@@ -208,6 +220,10 @@ def lambda_handler(event: dict, context) -> dict:
     # POST /urls — shorten
     if method == "POST" and path == "/urls":
         return _handle_post_urls(event, user_id)
+
+    # GET /user/urls — user's own URLs
+    if method == "GET" and path == "/user/urls":
+        return _handle_get_user_urls(user_id)
 
     # GET /admin/stats — admin stats
     if method == "GET" and path == "/admin/stats":
