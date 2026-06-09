@@ -26,15 +26,27 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
-    body { padding-top: 0; }
+    body { max-width: none; padding: 0; }
 
-    /* stat cards */
+    .page-wrap {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── content area ── */
+    .admin-content {
+      padding: 28px 32px;
+      flex: 1;
+    }
+
+    /* ── stat cards ── */
     .stat-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 0;
       border: 1px solid var(--border);
-      margin-bottom: 40px;
+      margin-bottom: 0;
     }
     .stat-card {
       padding: 20px;
@@ -56,7 +68,7 @@
       color: var(--muted);
     }
 
-    /* table */
+    /* ── data table ── */
     .data-table {
       width: 100%;
       border-collapse: collapse;
@@ -69,11 +81,11 @@
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--accent);
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
     }
     .data-table td {
-      padding: 12px 16px;
+      padding: 10px 14px;
       border-bottom: 1px solid var(--border);
       color: var(--text);
       font-weight: 500;
@@ -97,13 +109,13 @@
     .data-table .user-cell {
       font-size: 11px;
       color: var(--muted);
-      max-width: 160px;
+      max-width: 200px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    /* state messages */
+    /* ── state / empty messages ── */
     .state-msg {
       padding: 20px;
       font-size: 13px;
@@ -112,10 +124,10 @@
       text-align: center;
     }
 
-    /* login prompt */
+    /* ── login prompt ── */
     .login-box {
       border: 1px solid var(--border);
-      padding: 32px;
+      padding: 40px 32px;
       text-align: center;
       margin-top: 40px;
     }
@@ -140,7 +152,7 @@
     }
     .login-btn:hover { opacity: 0.88; }
 
-    /* refresh btn */
+    /* ── refresh button ── */
     .refresh-btn {
       font-family: 'JetBrains Mono', monospace;
       font-size: 11px;
@@ -154,112 +166,124 @@
     }
     .refresh-btn:hover { background: var(--text); color: var(--bg); }
 
+    /* ── section header row ── */
     .section-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 12px;
+      margin-bottom: 6px;
     }
 
+    /* ── footer ── */
+    footer { padding: 12px 32px 0; font-size: 11px; }
+
+    /* ── responsive ── */
     @media (max-width: 560px) {
+      .admin-content { padding: 20px; }
+      footer { padding: 20px 20px 0; }
       .stat-grid { grid-template-columns: 1fr 1fr; }
       .stat-card { border-bottom: 1px solid var(--border); }
+      .nav { padding: 0 20px 0 0; }
+      .nav-right { gap: 16px; }
     }
   </style>
 </head>
 <body>
 
-<!-- Nav -->
-<nav class="nav">
-  <div class="nav-logo-wrap">
-    <div class="nav-logo-bar"></div>
-    <div>
-      <a href="/" class="nav-logo">links.hemantkumar.dev</a>
-      <div style="font-size:11px;font-weight:500;color:var(--muted);margin-top:-4px;">Admin Dashboard</div>
+<div class="page-wrap">
+
+  <nav class="nav">
+    <div class="nav-logo-wrap">
+      <div class="nav-logo-bar"></div>
+      <div>
+        <a href="/" class="nav-logo">links.hemantkumar.dev</a>
+        <div style="font-size:11px;font-weight:500;color:var(--muted);margin-top:-4px;">Admin Dashboard</div>
+      </div>
     </div>
-  </div>
-  <div class="nav-right">
-    <a href="/" class="nav-link">← Back</a>
-    <span id="nav-user" style="font-size:12px;font-weight:600;color:var(--muted);"></span>
-    <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme">◐</button>
-  </div>
-</nav>
-
-<main id="main">
-
-  <!-- Login prompt — shown when not authenticated -->
-  <div id="login-section" style="display:none;">
-    <div class="login-box">
-      <p>Admin access required. Sign in with your Cognito account to view stats.</p>
-      <button class="login-btn" onclick="redirectToLogin()">Sign In</button>
+    <div class="nav-right">
+      <a href="/" class="nav-link">← Back</a>
+      <span id="nav-auth"></span>
+      <button id="theme-toggle" class="theme-btn" aria-label="Toggle theme" title="Toggle light / dark">◐</button>
     </div>
-  </div>
+  </nav>
 
-  <!-- Stats — shown when authenticated as admin -->
-  <div id="stats-section" style="display:none;">
+  <div class="admin-content">
 
-    <!-- Summary cards -->
-    <section class="section">
-      <div class="section-header">
-        <p class="label">Overview</p>
-        <button class="refresh-btn" onclick="loadStats()">↻ Refresh</button>
+    <!-- Login prompt — shown when not authenticated -->
+    <div id="login-section" style="display:none;">
+      <div class="login-box">
+        <p>Admin access required. Sign in with your Cognito account to view stats.</p>
+        <button class="login-btn" onclick="redirectToLogin()">Sign In</button>
       </div>
-      <div class="stat-grid" id="stat-grid">
-        <div class="stat-card"><div class="stat-card-val" id="s-total">—</div><div class="stat-card-name">Total URLs</div></div>
-        <div class="stat-card"><div class="stat-card-val" id="s-redirects">—</div><div class="stat-card-name">Total Redirects</div></div>
-        <div class="stat-card"><div class="stat-card-val" id="s-users">—</div><div class="stat-card-name">User URLs</div></div>
-        <div class="stat-card"><div class="stat-card-val" id="s-guests">—</div><div class="stat-card-name">Guest URLs</div></div>
-      </div>
-    </section>
+    </div>
 
-    <!-- Top links -->
-    <section class="section">
-      <p class="label">Top Links by Redirects</p>
-      <div class="box">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Short Link</th>
-              <th>Original URL</th>
-              <th>Created By</th>
-              <th>Created At</th>
-              <th style="text-align:right;">Redirects</th>
-            </tr>
-          </thead>
-          <tbody id="top-links-body">
-            <tr><td colspan="6" class="state-msg">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <!-- Stats — shown when authenticated as admin -->
+    <div id="stats-section" style="display:none;">
 
-    <!-- URLs by user -->
-    <section class="section">
-      <p class="label">URLs by User</p>
-      <div class="box">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>User</th>
-              <th style="text-align:right;">URLs Created</th>
-            </tr>
-          </thead>
-          <tbody id="by-user-body">
-            <tr><td colspan="2" class="state-msg">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
+      <!-- Summary cards -->
+      <section class="section">
+        <div class="section-header">
+          <p class="label">Overview</p>
+          <button class="refresh-btn" onclick="loadStats()">↻ Refresh</button>
+        </div>
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card"><div class="stat-card-val" id="s-total">—</div><div class="stat-card-name">Total URLs</div></div>
+          <div class="stat-card"><div class="stat-card-val" id="s-redirects">—</div><div class="stat-card-name">Total Redirects</div></div>
+          <div class="stat-card"><div class="stat-card-val" id="s-users">—</div><div class="stat-card-name">User URLs</div></div>
+          <div class="stat-card"><div class="stat-card-val" id="s-guests">—</div><div class="stat-card-name">Guest URLs</div></div>
+        </div>
+      </section>
 
-  </div>
+      <!-- Top links -->
+      <section class="section">
+        <p class="label">Top Links by Redirects</p>
+        <div class="box">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Short Link</th>
+                <th>Original URL</th>
+                <th>Created By</th>
+                <th>Created At</th>
+                <th style="text-align:right;">Redirects</th>
+              </tr>
+            </thead>
+            <tbody id="top-links-body">
+              <tr><td colspan="6" class="state-msg">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-</main>
+      <!-- URLs by user -->
+      <section class="section">
+        <p class="label">URLs by User</p>
+        <div class="box">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th style="text-align:right;">URLs Created</th>
+              </tr>
+            </thead>
+            <tbody id="by-user-body">
+              <tr><td colspan="2" class="state-msg">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-<footer>
-  <span>© 2026 Hemant Kumar</span>
-  <span>Admin · links.hemantkumar.dev</span>
-</footer>
+    </div>
+
+  </div><!-- /.admin-content -->
+
+  <footer>
+    <span>© 2026 Hemant Kumar</span>
+    <span>Admin · links.hemantkumar.dev</span>
+  </footer>
+
+</div><!-- /.page-wrap -->
 
 <script>
   // ── Config from meta tags ───────────────────────────────────────────────────
@@ -309,7 +333,6 @@
   async function loadStats() {
     const token = getToken();
 
-    // Update top links to loading state
     document.getElementById('top-links-body').innerHTML =
       '<tr><td colspan="6" class="state-msg">Loading...</td></tr>';
     document.getElementById('by-user-body').innerHTML =
@@ -380,16 +403,27 @@
   // ── Init ────────────────────────────────────────────────────────────────────
   (function init() {
     const token = getToken();
+    const navAuth = document.getElementById('nav-auth');
 
     if (!isTokenValid(token)) {
-      // Not logged in — show login prompt
+      // Not logged in — show login prompt, nav sign-in link
+      navAuth.innerHTML = '<a href="#" class="nav-link" onclick="redirectToLogin();return false;">Sign in</a>';
       document.getElementById('login-section').style.display = 'block';
       return;
     }
 
-    // Logged in — show stats
+    // Logged in — show email + sign out in nav, load stats
+    const email = getEmailFromToken(token);
+    navAuth.innerHTML =
+      `<span class="nav-link" style="color:var(--muted);cursor:default;">${email}</span>`
+      + `<a href="#" id="signout-btn" class="nav-link">Sign out</a>`;
+    document.getElementById('signout-btn').addEventListener('click', function (e) {
+      e.preventDefault();
+      sessionStorage.removeItem('hk_id_token');
+      window.location.reload();
+    });
+
     document.getElementById('stats-section').style.display = 'block';
-    document.getElementById('nav-user').textContent = getEmailFromToken(token);
     loadStats();
   })();
 </script>
